@@ -1,0 +1,19 @@
+# Dependencies
+node_modules/
+
+# Build outputs
+.next/
+dist/
+.turbo/
+
+# Environment variables (passwords, keys — NEVER commit!)
+.env
+.env.local
+.env*.local
+
+# Private notes
+TODO/
+
+# System files
+.DS_Store
+*.log
