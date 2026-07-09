@@ -3,11 +3,7 @@ import bcrypt from "bcryptjs";
 import { prisma } from "../index";
 
 async function main() {
-  // bcrypt.hash("hasło", 10) — "10" to liczba rund (salt rounds). Więcej rund
-  // = wolniej liczyć hash = trudniej złamać brute-force'em, ale wolniej się loguje.
-  // 10 to standardowy, bezpieczny kompromis.
   const passwordHash = await bcrypt.hash("Test1234!", 10);
-
   const user = await prisma.user.upsert({
     where: { email: "test@myfamily.local" },
     update: {},
