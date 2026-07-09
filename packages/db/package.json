@@ -1,0 +1,16 @@
+{
+  "name": "@myfamily/db",
+  "version": "0.1.0",
+  "private": true,
+  "main": "./index.ts",
+  "scripts": {
+    "studio": "prisma studio"
+  },
+  "dependencies": {
+    "@prisma/adapter-pg": "^7.4.2",
+    "@prisma/client": "^7.4.2",
+    "dotenv": "^17.4.2",
+    "pg": "^8.22.0",
+    "prisma": "^7.4.2"
+  }
+}
