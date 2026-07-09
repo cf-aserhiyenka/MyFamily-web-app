@@ -7,8 +7,50 @@ datasource db {
 }
 
 model User {
-  id        String   @id @default(uuid())
-  email     String   @unique
-  name      String
-  createdAt DateTime @default(now())
+  id           String   @id @default(uuid())
+  email        String   @unique
+  passwordHash String
+  firstName    String
+  lastName     String
+  birthDate    DateTime
+  isActive     Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  createdFamily Family?
+  familyMembers FamilyMember[]
+}
+
+model Family {
+  id                  String    @id @default(uuid())
+  name                String
+  description         String?
+  isActive            Boolean   @default(true)
+  deletionRequestedAt DateTime?
+  createdAt           DateTime  @default(now())
+
+  createdBy   User   @relation(fields: [createdById], references: [id])
+  createdById String @unique
+
+  members FamilyMember[]
+}
+
+model FamilyMember {
+  id       String     @id @default(uuid())
+  role     FamilyRole
+  joinedAt DateTime   @default(now())
+
+  user     User   @relation(fields: [userId], references: [id])
+  userId   String
+  family   Family @relation(fields: [familyId], references: [id])
+  familyId String
+
+  @@unique([userId, familyId])
+}
+
+enum FamilyRole {
+  PARENT
+  CHILD
+  GUARDIAN
+  SENIOR
 }
