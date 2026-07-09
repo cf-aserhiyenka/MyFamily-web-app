@@ -1,0 +1,15 @@
+@import "tailwindcss";
+
+@theme {
+  --color-cream: #f8f4ec;
+  --color-bark: #3d2f24;
+
+}
+
+
+@layer base {
+  body {
+    background-color: var(--color-cream);
+    color: var(--color-bark);
+  }
+}
