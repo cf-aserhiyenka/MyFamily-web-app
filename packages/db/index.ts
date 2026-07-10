@@ -1,9 +1,9 @@
 import { PrismaClient } from "@prisma/client";
 import { PrismaPg } from "@prisma/adapter-pg";
 
-// Next.js w trybie dev przeładowuje moduły przy każdej zmianie kodu (hot reload).
-// Bez cache w globalThis powstawałby nowy PrismaClient (i nowe połączenie do bazy)
-// przy każdym przeładowaniu, aż baza odrzuciłaby połączenia ("too many clients").
+// Next.js dev mode hot-reloads modules on every code change. Without caching
+// on globalThis, each reload would create a new PrismaClient (new DB connection)
+// until the database rejects further connections ("too many clients").
 const globalForPrisma = globalThis as unknown as { prisma?: PrismaClient };
 
 function createPrismaClient() {
