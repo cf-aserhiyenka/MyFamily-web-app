@@ -14,6 +14,9 @@ importers:
 
   apps/web:
     dependencies:
+      '@myfamily/db':
+        specifier: workspace:*
+        version: link:../../packages/db
       bcryptjs:
         specifier: ^3.0.3
         version: 3.0.3

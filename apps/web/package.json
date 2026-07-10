@@ -9,6 +9,7 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "@myfamily/db": "workspace:*",
     "bcryptjs": "^3.0.3",
     "next": "^16.2.10",
     "next-auth": "^4.24.14",
