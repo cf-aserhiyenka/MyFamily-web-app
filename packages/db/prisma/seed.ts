@@ -10,9 +10,7 @@ async function main() {
     create: {
       email: "test@myfamily.local",
       passwordHash,
-      firstName: "Jan",
-      lastName: "Testowy",
-      birthDate: new Date("1990-01-01"),
+      name: "Jan Testowy",
     },
   });
 
