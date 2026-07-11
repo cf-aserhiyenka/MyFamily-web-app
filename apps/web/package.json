@@ -9,12 +9,16 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "@hookform/resolvers": "^3.9.1",
     "@myfamily/db": "workspace:*",
+    "@myfamily/shared": "workspace:*",
     "bcryptjs": "^3.0.3",
     "next": "^16.2.10",
     "next-auth": "^4.24.14",
     "react": "^19.2.7",
-    "react-dom": "^19.2.7"
+    "react-dom": "^19.2.7",
+    "react-hook-form": "^7.54.2",
+    "zod": "^3.24.1"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4.3.2",
