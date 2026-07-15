@@ -52,6 +52,7 @@ async function main() {
     data: {
       firstName: "John",
       lastName: "Smith",
+      userId: jan.id,
     },
   });
 
@@ -59,6 +60,7 @@ async function main() {
     data: {
       firstName: "Anna",
       lastName: "Smith",
+      userId: anna.id,
     },
   });
 
@@ -66,6 +68,7 @@ async function main() {
     data: {
       firstName: "Peter",
       lastName: "Brown",
+      userId: piotr.id,
     },
   });
 
@@ -73,6 +76,7 @@ async function main() {
     data: {
       firstName: "Kate",
       lastName: "Brown",
+      userId: kasia.id,
     },
   });
 
@@ -80,6 +84,7 @@ async function main() {
     data: {
       firstName: "Adam",
       lastName: "White",
+      userId: adam.id,
     },
   });
 
