@@ -10,6 +10,8 @@ import {
   type UpdateProfileInput,
   changePasswordSchema,
   type ChangePasswordInput,
+  createFamilySchema,
+  type CreateFamilyInput,
 } from "@myfamily/shared";
 
 type FamilyRow = {
@@ -25,6 +27,7 @@ type ProfileClientProps = {
   lastName: string;
   birthDate: string; // "YYYY-MM-DD" or "" if unknown
   avatarBase64: string | null;
+  profileComplete: boolean;
   families: FamilyRow[];
 };
 
@@ -34,6 +37,7 @@ export function ProfileClient({
   lastName,
   birthDate,
   avatarBase64,
+  profileComplete,
   families,
 }: ProfileClientProps) {
   // Example state to demonstrate interaction
@@ -99,6 +103,51 @@ export function ProfileClient({
 
     resetPasswordForm();
     setPasswordSuccess(true);
+  }
+
+  // Create-family form: hidden until the "+ Create new family" tile is clicked.
+  // Blocked (with a message, no form shown) if the profile isn't complete yet.
+  const [showCreateFamilyForm, setShowCreateFamilyForm] = useState(false);
+  const [createFamilyGateMessage, setCreateFamilyGateMessage] = useState("");
+  const [createFamilyError, setCreateFamilyError] = useState("");
+  const {
+    register: registerFamily,
+    handleSubmit: handleFamilySubmit,
+    reset: resetFamilyForm,
+    formState: { errors: familyErrors, isSubmitting: isSubmittingFamily },
+  } = useForm<CreateFamilyInput>({
+    resolver: zodResolver(createFamilySchema),
+  });
+
+  function onCreateFamilyClick() {
+    if (!profileComplete) {
+      setCreateFamilyGateMessage(
+        "Please complete your profile (first name, last name, birth date) before creating a family."
+      );
+      return;
+    }
+    setCreateFamilyGateMessage("");
+    setShowCreateFamilyForm(true);
+  }
+
+  async function onCreateFamilySubmit(data: CreateFamilyInput) {
+    setCreateFamilyError("");
+
+    const response = await fetch("/api/family", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(data),
+    });
+
+    if (!response.ok) {
+      const body = await response.json();
+      setCreateFamilyError(body.error ?? "Could not create family.");
+      return;
+    }
+
+    resetFamilyForm();
+    setShowCreateFamilyForm(false);
+    router.refresh();
   }
 
   return (
@@ -308,12 +357,51 @@ export function ProfileClient({
               ))}
             </ul>
 
-            <button
-              type="button"
-              className="w-full mt-2 py-2.5 border border-dashed border-bark rounded-lg text-sm font-medium transition"
-            >
-              + Create new family
-            </button>
+            {createFamilyGateMessage && (
+              <p className="text-xs">{createFamilyGateMessage}</p>
+            )}
+
+            {showCreateFamilyForm ? (
+              <form
+                className="flex flex-col gap-2"
+                onSubmit={handleFamilySubmit(onCreateFamilySubmit)}
+              >
+                <input
+                  type="text"
+                  placeholder="Family name"
+                  className="rounded-lg border border-bark p-2.5 text-sm focus:outline-none transition"
+                  {...registerFamily("name")}
+                />
+                {familyErrors.name && (
+                  <span className="text-xs">{familyErrors.name.message}</span>
+                )}
+                {createFamilyError && <span className="text-xs">{createFamilyError}</span>}
+                <div className="flex gap-2">
+                  <button
+                    type="submit"
+                    disabled={isSubmittingFamily}
+                    className="flex-1 bg-bark text-cream font-medium text-sm px-3 py-2 rounded-lg shadow-sm transition"
+                  >
+                    {isSubmittingFamily ? "Creating..." : "Create"}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setShowCreateFamilyForm(false)}
+                    className="flex-1 border border-bark text-sm font-medium px-3 py-2 rounded-lg transition"
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </form>
+            ) : (
+              <button
+                type="button"
+                onClick={onCreateFamilyClick}
+                className="w-full mt-2 py-2.5 border border-dashed border-bark rounded-lg text-sm font-medium transition"
+              >
+                + Create new family
+              </button>
+            )}
           </section>
 
           {/* SECTION: Pending Invitations */}

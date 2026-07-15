@@ -24,6 +24,10 @@ export default async function ProfilePage() {
     redirect("/login");
   }
 
+  const profileComplete = Boolean(
+    personNode?.firstName && personNode?.lastName && personNode?.birthDate
+  );
+
   return (
     <ProfileClient
       email={user.email}
@@ -31,6 +35,7 @@ export default async function ProfilePage() {
       lastName={personNode?.lastName ?? ""}
       birthDate={personNode?.birthDate?.toISOString().split("T")[0] ?? ""}
       avatarBase64={personNode?.avatarBase64 ?? null}
+      profileComplete={profileComplete}
       families={familyMembers.map((member) => ({
         id: member.family.id,
         name: member.family.name,
