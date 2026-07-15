@@ -1,0 +1,50 @@
+import { NextResponse } from "next/server";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/lib/auth";
+import { prisma, FamilyRole, MemberStatus } from "@myfamily/db";
+import { createFamilySchema } from "@myfamily/shared";
+
+export async function POST(request: Request) {
+  const session = await getServerSession(authOptions);
+
+  if (!session?.user?.id) {
+    return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
+  }
+
+  const body = await request.json();
+  const parsed = createFamilySchema.safeParse(body);
+
+  if (!parsed.success) {
+    return NextResponse.json({ error: "Invalid family data" }, { status: 400 });
+  }
+
+  const personNode = await prisma.personNode.findUnique({
+    where: { userId: session.user.id },
+  });
+
+  // Never trust the client-side gate alone: a family always needs a real
+  // person behind it, so require firstName/lastName/birthDate here too.
+  if (!personNode?.firstName || !personNode?.lastName || !personNode?.birthDate) {
+    return NextResponse.json(
+      { error: "Please complete your profile (first name, last name, birth date) first." },
+      { status: 400 }
+    );
+  }
+
+  const family = await prisma.family.create({
+    data: {
+      name: parsed.data.name,
+      createdById: session.user.id,
+      members: {
+        create: {
+          userId: session.user.id,
+          personNodeId: personNode.id,
+          role: FamilyRole.PARENT,
+          status: MemberStatus.ACTIVE,
+        },
+      },
+    },
+  });
+
+  return NextResponse.json({ id: family.id, name: family.name }, { status: 201 });
+}

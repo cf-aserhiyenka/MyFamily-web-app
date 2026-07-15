@@ -57,14 +57,6 @@ export default function RegisterPage() {
         />
         {errors.password && <p>{errors.password.message}</p>}
 
-        <input
-          type="text"
-          placeholder="Name"
-          className="border border-bark p-2"
-          {...register("name")}
-        />
-        {errors.name && <p>{errors.name.message}</p>}
-
         {serverError && <p>{serverError}</p>}
 
         <button type="submit" disabled={isSubmitting}>
