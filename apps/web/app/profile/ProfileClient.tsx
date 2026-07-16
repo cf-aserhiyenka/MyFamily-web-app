@@ -36,7 +36,8 @@ type ProfileClientProps = {
   lastName: string;
   birthDate: string; // "YYYY-MM-DD" or "" if unknown
   avatarBase64: string | null;
-  profileComplete: boolean;
+  canCreateFamily: boolean;
+  createFamilyBlockedReason: string;
   families: FamilyRow[];
   pendingInvitations: PendingInvitationRow[];
 };
@@ -47,7 +48,8 @@ export function ProfileClient({
   lastName,
   birthDate,
   avatarBase64,
-  profileComplete,
+  canCreateFamily,
+  createFamilyBlockedReason,
   families,
   pendingInvitations,
 }: ProfileClientProps) {
@@ -131,10 +133,8 @@ export function ProfileClient({
   });
 
   function onCreateFamilyClick() {
-    if (!profileComplete) {
-      setCreateFamilyGateMessage(
-        "Please complete your profile (first name, last name, birth date) before creating a family."
-      );
+    if (!canCreateFamily) {
+      setCreateFamilyGateMessage(createFamilyBlockedReason);
       return;
     }
     setCreateFamilyGateMessage("");

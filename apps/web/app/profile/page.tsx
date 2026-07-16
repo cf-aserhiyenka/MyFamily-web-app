@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@myfamily/db";
 import { ProfileClient } from "./ProfileClient";
+import { isAtLeast18 } from "@/lib/age";
 
 export default async function ProfilePage() {
   const session = await getServerSession(authOptions);
@@ -36,6 +37,12 @@ export default async function ProfilePage() {
   const profileComplete = Boolean(
     personNode?.firstName && personNode?.lastName && personNode?.birthDate
   );
+  const canCreateFamily = profileComplete && isAtLeast18(personNode?.birthDate ?? new Date());
+  const createFamilyBlockedReason = !profileComplete
+    ? "Please complete your profile (first name, last name, birth date) before creating a family."
+    : !canCreateFamily
+      ? "You must be at least 18 years old to create a family."
+      : "";
 
   return (
     <ProfileClient
@@ -44,7 +51,8 @@ export default async function ProfilePage() {
       lastName={personNode?.lastName ?? ""}
       birthDate={personNode?.birthDate?.toISOString().split("T")[0] ?? ""}
       avatarBase64={personNode?.avatarBase64 ?? null}
-      profileComplete={profileComplete}
+      canCreateFamily={canCreateFamily}
+      createFamilyBlockedReason={createFamilyBlockedReason}
       families={familyMembers.map((member) => ({
         id: member.family.id,
         name: member.family.name,
