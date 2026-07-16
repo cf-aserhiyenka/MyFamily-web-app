@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma, FamilyRole, MemberStatus } from "@myfamily/db";
 import { createFamilySchema } from "@myfamily/shared";
+import { isAtLeast18 } from "@/lib/age";
 
 export async function POST(request: Request) {
   const session = await getServerSession(authOptions);
@@ -27,6 +28,13 @@ export async function POST(request: Request) {
   if (!personNode?.firstName || !personNode?.lastName || !personNode?.birthDate) {
     return NextResponse.json(
       { error: "Please complete your profile (first name, last name, birth date) first." },
+      { status: 400 }
+    );
+  }
+
+  if (!isAtLeast18(personNode.birthDate)) {
+    return NextResponse.json(
+      { error: "You must be at least 18 years old to create a family." },
       { status: 400 }
     );
   }

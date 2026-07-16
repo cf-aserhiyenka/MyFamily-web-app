@@ -31,7 +31,8 @@ model Family {
   createdBy   User   @relation(fields: [createdById], references: [id])
   createdById String
 
-  members FamilyMember[]
+  members     FamilyMember[]
+  invitations FamilyInvitation[]
 }
 
 model FamilyMember {
@@ -47,6 +48,8 @@ model FamilyMember {
 
   personNode   PersonNode @relation(fields: [personNodeId], references: [id])
   personNodeId String
+
+  sentInvitations FamilyInvitation[]
 
   @@unique([userId, familyId])
 }
@@ -78,4 +81,21 @@ model PersonNode {
   userId String? @unique
 
   familyMembers FamilyMember[]
+}
+
+model FamilyInvitation {
+  id         String     @id @default(uuid())
+  token      String     @unique
+  email      String
+  role       FamilyRole
+  expiresAt  DateTime
+  usedAt     DateTime?
+  declinedAt DateTime?
+  createdAt  DateTime   @default(now())
+
+  family   Family @relation(fields: [familyId], references: [id])
+  familyId String
+
+  invitedBy   FamilyMember @relation(fields: [invitedById], references: [id])
+  invitedById String
 }

@@ -11,12 +11,21 @@ export default async function ProfilePage() {
     redirect("/login");
   }
 
-  const [user, personNode, familyMembers] = await Promise.all([
+  const [user, personNode, familyMembers, pendingInvitations] = await Promise.all([
     prisma.user.findUnique({ where: { id: session.user.id } }),
     prisma.personNode.findUnique({ where: { userId: session.user.id } }),
     prisma.familyMember.findMany({
       where: { userId: session.user.id },
       include: { family: true },
+    }),
+    prisma.familyInvitation.findMany({
+      where: {
+        email: session.user.email ?? "",
+        usedAt: null,
+        declinedAt: null,
+        expiresAt: { gt: new Date() },
+      },
+      include: { family: true, invitedBy: { include: { personNode: true } } },
     }),
   ]);
 
@@ -41,6 +50,12 @@ export default async function ProfilePage() {
         name: member.family.name,
         role: member.role,
         isOwner: member.family.createdById === session.user.id,
+      }))}
+      pendingInvitations={pendingInvitations.map((invitation) => ({
+        id: invitation.id,
+        familyName: invitation.family.name,
+        role: invitation.role,
+        invitedByName: `${invitation.invitedBy.personNode.firstName} ${invitation.invitedBy.personNode.lastName}`,
       }))}
     />
   );
