@@ -12,6 +12,8 @@ import {
   type ChangePasswordInput,
   createFamilySchema,
   type CreateFamilyInput,
+  createInvitationSchema,
+  type CreateInvitationInput,
 } from "@myfamily/shared";
 
 type FamilyRow = {
@@ -19,6 +21,13 @@ type FamilyRow = {
   name: string;
   role: string;
   isOwner: boolean;
+};
+
+type PendingInvitationRow = {
+  id: string;
+  familyName: string;
+  role: string;
+  invitedByName: string;
 };
 
 type ProfileClientProps = {
@@ -29,6 +38,7 @@ type ProfileClientProps = {
   avatarBase64: string | null;
   profileComplete: boolean;
   families: FamilyRow[];
+  pendingInvitations: PendingInvitationRow[];
 };
 
 export function ProfileClient({
@@ -39,6 +49,7 @@ export function ProfileClient({
   avatarBase64,
   profileComplete,
   families,
+  pendingInvitations,
 }: ProfileClientProps) {
   // Example state to demonstrate interaction
   const [avatar, setAvatar] = useState<string | null>(avatarBase64);
@@ -147,6 +158,76 @@ export function ProfileClient({
 
     resetFamilyForm();
     setShowCreateFamilyForm(false);
+    router.refresh();
+  }
+
+  // Invite form: shown under a family's "Manage" button, one at a time.
+  const [manageFamilyId, setManageFamilyId] = useState<string | null>(null);
+  const [inviteError, setInviteError] = useState("");
+  const [inviteSuccess, setInviteSuccess] = useState(false);
+  const {
+    register: registerInvite,
+    handleSubmit: handleInviteSubmit,
+    reset: resetInviteForm,
+    formState: { errors: inviteErrors, isSubmitting: isSubmittingInvite },
+  } = useForm<CreateInvitationInput>({
+    resolver: zodResolver(createInvitationSchema),
+  });
+
+  function onManageClick(familyId: string) {
+    setInviteError("");
+    setInviteSuccess(false);
+    resetInviteForm();
+    setManageFamilyId((current) => (current === familyId ? null : familyId));
+  }
+
+  async function onInviteSubmit(data: CreateInvitationInput) {
+    if (!manageFamilyId) return;
+    setInviteError("");
+    setInviteSuccess(false);
+
+    const response = await fetch(`/api/family/${manageFamilyId}/invitations`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(data),
+    });
+
+    if (!response.ok) {
+      const body = await response.json();
+      setInviteError(body.error ?? "Could not send invitation.");
+      return;
+    }
+
+    resetInviteForm();
+    setInviteSuccess(true);
+  }
+
+  // Accept / decline a pending invitation addressed to the current user.
+  const [invitationActionError, setInvitationActionError] = useState("");
+
+  async function onAcceptInvitation(invitationId: string) {
+    setInvitationActionError("");
+    const response = await fetch(`/api/invitations/${invitationId}/accept`, { method: "POST" });
+
+    if (!response.ok) {
+      const body = await response.json();
+      setInvitationActionError(body.error ?? "Could not accept invitation.");
+      return;
+    }
+
+    router.refresh();
+  }
+
+  async function onDeclineInvitation(invitationId: string) {
+    setInvitationActionError("");
+    const response = await fetch(`/api/invitations/${invitationId}/decline`, { method: "POST" });
+
+    if (!response.ok) {
+      const body = await response.json();
+      setInvitationActionError(body.error ?? "Could not decline invitation.");
+      return;
+    }
+
     router.refresh();
   }
 
@@ -330,28 +411,68 @@ export function ProfileClient({
 
             <ul className="flex flex-col gap-3">
               {families.map((family) => (
-                <li
-                  key={family.id}
-                  className="flex items-center justify-between p-3 rounded-xl border border-bark"
-                >
-                  <div className="flex items-center gap-3">
-                    <div className="w-9 h-9 rounded-full bg-bark text-cream flex items-center justify-center font-bold text-sm">
-                      {family.name.slice(0, 2).toUpperCase()}
+                <li key={family.id} className="rounded-xl border border-bark">
+                  <div className="flex items-center justify-between p-3">
+                    <div className="flex items-center gap-3">
+                      <div className="w-9 h-9 rounded-full bg-bark text-cream flex items-center justify-center font-bold text-sm">
+                        {family.name.slice(0, 2).toUpperCase()}
+                      </div>
+                      <div>
+                        <p className="text-sm font-semibold">{family.name}</p>
+                        <span className="inline-block bg-bark text-cream text-[10px] font-bold px-2 py-0.5 rounded-full mt-0.5">
+                          {family.isOwner ? "Owner" : family.role}
+                        </span>
+                      </div>
                     </div>
-                    <div>
-                      <p className="text-sm font-semibold">{family.name}</p>
-                      <span className="inline-block bg-bark text-cream text-[10px] font-bold px-2 py-0.5 rounded-full mt-0.5">
-                        {family.isOwner ? "Owner" : family.role}
-                      </span>
-                    </div>
-                  </div>
-                  {family.isOwner && (
                     <button
                       type="button"
+                      onClick={() => onManageClick(family.id)}
                       className="text-xs border border-bark font-medium px-3 py-1.5 rounded-lg transition"
                     >
                       Manage
                     </button>
+                  </div>
+
+                  {manageFamilyId === family.id && (
+                    <form
+                      className="flex flex-col gap-2 p-3 border-t border-bark"
+                      onSubmit={handleInviteSubmit(onInviteSubmit)}
+                    >
+                      <p className="text-xs font-medium">Invite someone to {family.name}</p>
+                      <input
+                        type="email"
+                        placeholder="Email address"
+                        className="rounded-lg border border-bark p-2 text-sm focus:outline-none transition"
+                        {...registerInvite("email")}
+                      />
+                      {inviteErrors.email && (
+                        <span className="text-xs">{inviteErrors.email.message}</span>
+                      )}
+
+                      <select
+                        className="rounded-lg border border-bark p-2 text-sm focus:outline-none transition"
+                        {...registerInvite("role")}
+                      >
+                        <option value="PARENT">Parent</option>
+                        <option value="CHILD">Child</option>
+                        <option value="GUARDIAN">Guardian</option>
+                        <option value="SENIOR">Senior</option>
+                      </select>
+                      {inviteErrors.role && (
+                        <span className="text-xs">{inviteErrors.role.message}</span>
+                      )}
+
+                      {inviteError && <span className="text-xs">{inviteError}</span>}
+                      {inviteSuccess && <span className="text-xs">Invitation sent.</span>}
+
+                      <button
+                        type="submit"
+                        disabled={isSubmittingInvite}
+                        className="self-start bg-bark text-cream font-medium text-xs px-3 py-2 rounded-lg shadow-sm transition"
+                      >
+                        {isSubmittingInvite ? "Sending..." : "Send invitation"}
+                      </button>
+                    </form>
                   )}
                 </li>
               ))}
@@ -411,32 +532,50 @@ export function ProfileClient({
               <p className="text-xs">Other families invited you to join them.</p>
             </div>
 
-            <div className="p-4 border border-bark rounded-xl flex flex-col gap-3">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-full bg-bark text-cream flex items-center justify-center font-bold text-sm">
-                  WF
-                </div>
-                <div>
-                  <p className="text-sm font-semibold">White Family</p>
-                  <p className="text-xs">Invited you as <span className="font-semibold">Member</span></p>
-                </div>
-              </div>
+            {invitationActionError && <p className="text-xs">{invitationActionError}</p>}
 
-              <div className="grid grid-cols-2 gap-2 mt-1">
-                <button
-                  type="button"
-                  className="w-full bg-bark text-cream text-xs font-semibold py-2 rounded-lg transition"
+            {pendingInvitations.length === 0 ? (
+              <p className="text-xs">No pending invitations.</p>
+            ) : (
+              pendingInvitations.map((invitation) => (
+                <div
+                  key={invitation.id}
+                  className="p-4 border border-bark rounded-xl flex flex-col gap-3"
                 >
-                  Accept
-                </button>
-                <button
-                  type="button"
-                  className="w-full border border-bark text-xs font-semibold py-2 rounded-lg transition"
-                >
-                  Decline
-                </button>
-              </div>
-            </div>
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-full bg-bark text-cream flex items-center justify-center font-bold text-sm">
+                      {invitation.familyName.slice(0, 2).toUpperCase()}
+                    </div>
+                    <div>
+                      <p className="text-sm font-semibold">{invitation.familyName}</p>
+                      <p className="text-xs">
+                        Invited you as <span className="font-semibold">{invitation.role}</span>
+                      </p>
+                      <p className="text-xs">
+                        By <span className="font-semibold">{invitation.invitedByName}</span>
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-2 mt-1">
+                    <button
+                      type="button"
+                      onClick={() => onAcceptInvitation(invitation.id)}
+                      className="w-full bg-bark text-cream text-xs font-semibold py-2 rounded-lg transition"
+                    >
+                      Accept
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => onDeclineInvitation(invitation.id)}
+                      className="w-full border border-bark text-xs font-semibold py-2 rounded-lg transition"
+                    >
+                      Decline
+                    </button>
+                  </div>
+                </div>
+              ))
+            )}
           </section>
 
         </div>
