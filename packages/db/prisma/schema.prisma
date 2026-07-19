@@ -31,8 +31,9 @@ model Family {
   createdBy   User   @relation(fields: [createdById], references: [id])
   createdById String
 
-  members     FamilyMember[]
-  invitations FamilyInvitation[]
+  members       FamilyMember[]
+  invitations   FamilyInvitation[]
+  conversations Conversation[]
 }
 
 model FamilyMember {
@@ -49,7 +50,10 @@ model FamilyMember {
   personNode   PersonNode @relation(fields: [personNodeId], references: [id])
   personNodeId String
 
-  sentInvitations FamilyInvitation[]
+  sentInvitations          FamilyInvitation[]
+  conversationParticipants ConversationParticipant[]
+  sentMessages             Message[]                  @relation("MessageSender")
+  createdConversations     Conversation[]             @relation("ConversationCreatedBy")
 
   @@unique([userId, familyId])
 }
@@ -98,4 +102,56 @@ model FamilyInvitation {
 
   invitedBy   FamilyMember @relation(fields: [invitedById], references: [id])
   invitedById String
+}
+
+
+enum ConversationType {
+  GROUP_DEFAULT
+  GROUP_CUSTOM
+  DIRECT
+}
+
+model Conversation {
+  id            String           @id @default(uuid())
+  type          ConversationType
+  name          String?
+  createdAt     DateTime         @default(now())
+  lastMessageAt DateTime?
+
+  family   Family @relation(fields: [familyId], references: [id])
+  familyId String
+
+  createdBy   FamilyMember? @relation("ConversationCreatedBy", fields: [createdById], references: [id])
+  createdById String?
+
+  participants ConversationParticipant[]
+  messages     Message[]
+}
+
+model ConversationParticipant {
+  id       String    @id @default(uuid())
+  joinedAt DateTime  @default(now())
+  leftAt   DateTime?
+
+  conversation   Conversation @relation(fields: [conversationId], references: [id])
+  conversationId String
+
+  member   FamilyMember @relation(fields: [memberId], references: [id])
+  memberId String
+
+  @@unique([conversationId, memberId])
+}
+
+model Message {
+  id        String    @id @default(uuid())
+  content   String
+  sentAt    DateTime  @default(now())
+  isDeleted Boolean   @default(false)
+  deletedAt DateTime?
+
+  conversation   Conversation @relation(fields: [conversationId], references: [id])
+  conversationId String
+
+  sender   FamilyMember @relation("MessageSender", fields: [senderId], references: [id])
+  senderId String
 }
