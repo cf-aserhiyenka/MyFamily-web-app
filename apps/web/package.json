@@ -12,6 +12,7 @@
     "@hookform/resolvers": "^3.9.1",
     "@myfamily/db": "workspace:*",
     "@myfamily/shared": "workspace:*",
+    "@tanstack/react-query": "^5.101.2",
     "bcryptjs": "^3.0.3",
     "next": "^16.2.10",
     "next-auth": "^4.24.14",
