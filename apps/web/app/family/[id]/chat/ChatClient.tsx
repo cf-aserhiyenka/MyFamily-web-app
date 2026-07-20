@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 
 type ConversationRow = {
@@ -17,12 +18,20 @@ type MessageRow = {
   senderName: string;
 };
 
-type ChatClientProps = {
-  memberId: string;
-  conversations: ConversationRow[];
+type MemberRow = {
+  id: string;
+  name: string;
 };
 
-export function ChatClient({ memberId, conversations }: ChatClientProps) {
+type ChatClientProps = {
+  familyId: string;
+  memberId: string;
+  conversations: ConversationRow[];
+  members: MemberRow[];
+};
+
+export function ChatClient({ familyId, memberId, conversations, members }: ChatClientProps) {
+  const router = useRouter();
   const [selectedId, setSelectedId] = useState<string | null>(conversations[0]?.id ?? null);
   const [content, setContent] = useState("");
   const queryClient = useQueryClient();
@@ -54,28 +63,46 @@ export function ChatClient({ memberId, conversations }: ChatClientProps) {
     },
   });
 
+  const startConversation = useMutation({
+    mutationFn: async (targetMemberId: string) => {
+      const res = await fetch(`/api/family/${familyId}/conversations`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ targetMemberId }),
+      });
+      if (!res.ok) throw new Error("Failed to start conversation");
+      return res.json() as Promise<{ id: string }>;
+    },
+    onSuccess: (result) => {
+      setSelectedId(result.id);
+      router.refresh();
+    },
+  });
+
   function conversationLabel(conversation: ConversationRow) {
     if (conversation.name) return conversation.name;
-    return conversation.type === "GROUP_DEFAULT" ? "Whole family" : "Direct message";
+    return conversation.type === "GROUP_DEFAULT" ? "Whole family" : "Group chat";
   }
 
   return (
     <main className="min-h-screen flex">
-      <aside className="w-64 border-r border-bark p-4 flex flex-col gap-2">
-        <h2 className="text-lg font-semibold mb-2">Conversations</h2>
-        {conversations.map((conversation) => (
-          <button
-            key={conversation.id}
-            type="button"
-            onClick={() => setSelectedId(conversation.id)}
-            className={
-              "text-left px-3 py-2 rounded-lg " +
-              (selectedId === conversation.id ? "bg-bark text-cream" : "")
-            }
-          >
-            {conversationLabel(conversation)}
-          </button>
-        ))}
+      <aside className="w-64 border-r border-bark p-4 flex flex-col gap-2 shrink-0">
+        <h2 className="text-lg font-semibold mb-2">Group chats</h2>
+        {conversations
+          .filter((conversation) => conversation.type !== "DIRECT")
+          .map((conversation) => (
+            <button
+              key={conversation.id}
+              type="button"
+              onClick={() => setSelectedId(conversation.id)}
+              className={
+                "text-left px-3 py-2 rounded-lg " +
+                (selectedId === conversation.id ? "bg-bark text-cream" : "")
+              }
+            >
+              {conversationLabel(conversation)}
+            </button>
+          ))}
       </aside>
 
       <section className="flex-1 flex flex-col p-4">
@@ -109,6 +136,20 @@ export function ChatClient({ memberId, conversations }: ChatClientProps) {
           </button>
         </form>
       </section>
+
+      <aside className="w-64 border-l border-bark p-4 flex flex-col gap-2 shrink-0">
+        <h2 className="text-lg font-semibold mb-2">Chats</h2>
+        {members.map((member) => (
+          <button
+            key={member.id}
+            type="button"
+            onClick={() => startConversation.mutate(member.id)}
+            className="text-left px-3 py-2 rounded-lg"
+          >
+            {member.name}
+          </button>
+        ))}
+      </aside>
     </main>
   );
 }

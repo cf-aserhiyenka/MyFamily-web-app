@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
-import { prisma, FamilyRole, MemberStatus, ConversationType } from "@myfamily/db";
+import { prisma, FamilyRole, MemberStatus } from "@myfamily/db";
 import { createFamilySchema } from "@myfamily/shared";
 import { isAtLeast18 } from "@/lib/age";
 
@@ -39,38 +39,19 @@ export async function POST(request: Request) {
     );
   }
 
-  // Family + founding member + default group chat must all exist together
-  // or not at all, so this whole block runs as one transaction.
-  const family = await prisma.$transaction(async (tx) => {
-    const createdFamily = await tx.family.create({
-      data: {
-        name: parsed.data.name,
-        createdById: session.user.id,
-        members: {
-          create: {
-            userId: session.user.id,
-            personNodeId: personNode.id,
-            role: FamilyRole.PARENT,
-            status: MemberStatus.ACTIVE,
-          },
+  const family = await prisma.family.create({
+    data: {
+      name: parsed.data.name,
+      createdById: session.user.id,
+      members: {
+        create: {
+          userId: session.user.id,
+          personNodeId: personNode.id,
+          role: FamilyRole.PARENT,
+          status: MemberStatus.ACTIVE,
         },
       },
-      include: { members: true },
-    });
-
-    const founderMember = createdFamily.members[0];
-
-    await tx.conversation.create({
-      data: {
-        type: ConversationType.GROUP_DEFAULT,
-        familyId: createdFamily.id,
-        participants: {
-          create: { memberId: founderMember.id },
-        },
-      },
-    });
-
-    return createdFamily;
+    },
   });
 
   return NextResponse.json({ id: family.id, name: family.name }, { status: 201 });

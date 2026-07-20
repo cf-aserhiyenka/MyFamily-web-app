@@ -30,15 +30,37 @@ export default async function ChatPage({ params }: { params: Promise<{ id: strin
       },
     },
     orderBy: { lastMessageAt: "desc" },
+    include: {
+      participants: {
+        where: { memberId: { not: member.id } },
+        include: { member: { include: { personNode: true } } },
+      },
+    },
+  });
+
+  const members = await prisma.familyMember.findMany({
+    where: { familyId, status: "ACTIVE", id: { not: member.id } },
+    include: { personNode: true },
   });
 
   return (
     <ChatClient
+      familyId={familyId}
       memberId={member.id}
-      conversations={conversations.map((conversation) => ({
-        id: conversation.id,
-        type: conversation.type,
-        name: conversation.name,
+      conversations={conversations.map((conversation) => {
+        const other = conversation.participants[0]?.member.personNode;
+        return {
+          id: conversation.id,
+          type: conversation.type,
+          name:
+            conversation.type === "DIRECT" && other
+              ? `${other.firstName} ${other.lastName}`
+              : conversation.name,
+        };
+      })}
+      members={members.map((m) => ({
+        id: m.id,
+        name: `${m.personNode.firstName} ${m.personNode.lastName}`,
       }))}
     />
   );
