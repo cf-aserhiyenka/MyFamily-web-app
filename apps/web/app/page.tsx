@@ -2,12 +2,11 @@ import Link from "next/link";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@myfamily/db";
-import { DashboardClient } from "./DashboardClient";
+import { DashboardClient2 } from "./DashboardClient";
 
 export default async function HomePage() {
   const session = await getServerSession(authOptions);
-
-  // Logged-out visitor: keep the simple public landing, no DB queries needed.
+  
   if (!session?.user?.id) {
     return (
       <main className="flex min-h-screen flex-col items-center justify-center gap-4">
@@ -21,18 +20,18 @@ export default async function HomePage() {
     );
   }
 
-  // Same pattern as /profile: server component fetches data, client component renders it.
-  const [personNode, familyMembers] = await Promise.all([
-    prisma.personNode.findUnique({ where: { userId: session.user.id } }),
-    prisma.familyMember.findMany({
-      where: { userId: session.user.id },
-      include: { family: { include: { _count: { select: { members: true } } } } },
-    }),
-  ]);
+  const personNode = await prisma.personNode.findUnique({
+    where: { userId: session.user.id },
+  });
+
+  const familyMembers = await prisma.familyMember.findMany({
+    where: { userId: session.user.id },
+    include: { family: { include: { _count: { select: { members: true } } } } },
+  });
 
   return (
-    <DashboardClient
-      firstName={personNode?.firstName ?? ""}
+    <DashboardClient2
+      firstName={personNode ? personNode.firstName : ""}
       families={familyMembers.map((member) => ({
         id: member.family.id,
         name: member.family.name,
