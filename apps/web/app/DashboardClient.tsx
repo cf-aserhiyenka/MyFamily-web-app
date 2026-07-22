@@ -44,12 +44,12 @@ export function DashboardClient2(props: DashboardClientProps) {
             <p className="text-sm mt-1">You have {families.length} families</p>
           )}
         </div>
-        
+
         {hasFamilies ? (
           <div className="flex flex-col gap-4">
             {families.map((family) => (
-              <Link href={`/family/${family.id}/dashboard`}>
-                <div key={family.id} className="rounded-2xl border border-bark p-4 shadow-sm">
+              <Link key={family.id} href={`/family/${family.id}/dashboard`}>
+                <div  className="rounded-2xl border border-bark p-4 shadow-sm">
                   <p className="text-sm font-semibold">{family.name}</p>
                   <p className="text-xs mt-1">{family.memberCount} members</p>
                 </div>
