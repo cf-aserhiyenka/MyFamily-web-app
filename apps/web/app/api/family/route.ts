@@ -23,8 +23,6 @@ export async function POST(request: Request) {
     where: { userId: session.user.id },
   });
 
-  // Never trust the client-side gate alone: a family always needs a real
-  // person behind it, so require firstName/lastName/birthDate here too.
   if (!personNode?.firstName || !personNode?.lastName || !personNode?.birthDate) {
     return NextResponse.json(
       { error: "Please complete your profile (first name, last name, birth date) first." },
