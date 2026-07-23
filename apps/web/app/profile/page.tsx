@@ -11,24 +11,21 @@ export default async function ProfilePage() {
   if (!session?.user?.id) {
     redirect("/login");
   }
-
-  const [user, personNode, familyMembers, pendingInvitations] = await Promise.all([
-    prisma.user.findUnique({ where: { id: session.user.id } }),
-    prisma.personNode.findUnique({ where: { userId: session.user.id } }),
-    prisma.familyMember.findMany({
-      where: { userId: session.user.id },
-      include: { family: true },
-    }),
-    prisma.familyInvitation.findMany({
-      where: {
-        email: session.user.email ?? "",
-        usedAt: null,
-        declinedAt: null,
-        expiresAt: { gt: new Date() },
-      },
-      include: { family: true, invitedBy: { include: { personNode: true } } },
-    }),
-  ]);
+  const user = await prisma.user.findUnique({ where: { id: session.user.id } });
+  const personNode = await prisma.personNode.findUnique({ where: { userId: session.user.id } });
+  const familyMembers = await prisma.familyMember.findMany({
+    where: { userId: session.user.id },
+    include: { family: true },
+  });
+  const pendingInvitations = await prisma.familyInvitation.findMany({
+    where: {
+      email:  session.user.email || "",
+      usedAt: null,
+      declinedAt: null,
+      expiresAt: { gt: new Date() },
+    },
+    include: { family: true, invitedBy: { include: { personNode: true } } },
+  });
 
   if (!user) {
     redirect("/login");
@@ -38,11 +35,16 @@ export default async function ProfilePage() {
     personNode?.firstName && personNode?.lastName && personNode?.birthDate
   );
   const canCreateFamily = profileComplete && isAtLeast18(personNode?.birthDate ?? new Date());
-  const createFamilyBlockedReason = !profileComplete
-    ? "Please complete your profile (first name, last name, birth date) before creating a family."
-    : !canCreateFamily
-      ? "You must be at least 18 years old to create a family."
-      : "";
+  
+  let createFamilyBlockedReason = "";
+  if (!profileComplete) {
+    createFamilyBlockedReason =
+      "Please complete your profile...";
+  }
+  else if (!canCreateFamily) {
+    createFamilyBlockedReason =
+      "You must be at least 18 years old...";
+  }
 
   return (
     <ProfileClient
