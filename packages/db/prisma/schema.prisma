@@ -34,6 +34,9 @@ model Family {
   members       FamilyMember[]
   invitations   FamilyInvitation[]
   conversations Conversation[]
+  budgets       Budget[]
+  expenses      Expense[]
+  savingGoals   SavingGoal[]
 }
 
 model FamilyMember {
@@ -54,6 +57,10 @@ model FamilyMember {
   conversationParticipants ConversationParticipant[]
   sentMessages             Message[]                  @relation("MessageSender")
   createdConversations     Conversation[]             @relation("ConversationCreatedBy")
+  createdBudgets           Budget[]                   @relation("BudgetCreatedBy")
+  paidExpenses             Expense[]                  @relation("ExpensePaidBy")
+  createdSavingGoals       SavingGoal[]               @relation("SavingGoalCreatedBy")
+  goalContributions        GoalContribution[]         @relation("GoalContributionMember")
 
   @@unique([userId, familyId])
 }
@@ -154,4 +161,88 @@ model Message {
 
   sender   FamilyMember @relation("MessageSender", fields: [senderId], references: [id])
   senderId String
+}
+
+enum BudgetCategory {
+  GROCERIES
+  BILLS
+  EDUCATION
+  HEALTH
+  ENTERTAINMENT
+  TRANSPORT
+  OTHER
+}
+
+enum BudgetPeriod {
+  WEEKLY
+  MONTHLY
+  YEARLY
+}
+
+model Budget {
+  id          String         @id @default(uuid())
+  name        String
+  category    BudgetCategory
+  limitAmount Decimal        @db.Decimal(12, 2)
+  period      BudgetPeriod
+  currency    String         @default("PLN")
+  isActive    Boolean        @default(true)
+  createdAt   DateTime       @default(now())
+
+  family   Family @relation(fields: [familyId], references: [id])
+  familyId String
+
+  createdBy   FamilyMember @relation("BudgetCreatedBy", fields: [createdById], references: [id])
+  createdById String
+
+  expenses Expense[]
+}
+
+model Expense {
+  id        String   @id @default(uuid())
+  title     String
+  amount    Decimal  @db.Decimal(12, 2)
+  date      DateTime
+  note      String?
+  createdAt DateTime @default(now())
+
+  family   Family @relation(fields: [familyId], references: [id])
+  familyId String
+
+  budget   Budget? @relation(fields: [budgetId], references: [id])
+  budgetId String?
+
+  paidBy   FamilyMember @relation("ExpensePaidBy", fields: [paidById], references: [id])
+  paidById String
+}
+
+model SavingGoal {
+  id           String    @id @default(uuid())
+  name         String
+  targetAmount Decimal   @db.Decimal(12, 2)
+  deadline     DateTime?
+  currency     String    @default("PLN")
+  isAchieved   Boolean   @default(false)
+  createdAt    DateTime  @default(now())
+
+  family   Family @relation(fields: [familyId], references: [id])
+  familyId String
+
+  createdBy   FamilyMember @relation("SavingGoalCreatedBy", fields: [createdById], references: [id])
+  createdById String
+
+  contributions GoalContribution[]
+}
+
+model GoalContribution {
+  id            String   @id @default(uuid())
+  amount        Decimal  @db.Decimal(12, 2)
+  note          String?
+  contributedAt DateTime @default(now())
+
+  goal   SavingGoal @relation(fields: [goalId], references: [id])
+  goalId String
+
+  member   FamilyMember @relation("GoalContributionMember", fields: [memberId], references: [id])
+  memberId String
 }
