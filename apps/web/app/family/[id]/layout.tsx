@@ -1,4 +1,5 @@
 import { Sidebar } from "./Sidebar";
+import { prisma } from "@myfamily/db";
 
 export default async function FamilyLayout({
   children,
@@ -10,13 +11,15 @@ export default async function FamilyLayout({
   }>;
 }) {
   const familyId  = (await params).id;
-//  const family = await params;
 
-  console.log(familyId);
+  const family = await prisma.family.findUnique({
+    where: { id: familyId },
+    select: { name: true },
+  });
 
     return(
         <div  className="flex min-h-screen">
-            <Sidebar familyId= {familyId} />
+            <Sidebar familyId={familyId} familyName={family?.name ?? ""} />
             <main className="flex-1">
                 {children}
             </main>

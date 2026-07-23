@@ -1,12 +1,13 @@
 import Link from "next/link";
 
 // TODO: map function
-export function Sidebar({ familyId }: { familyId: string }) {
+export function Sidebar({ familyId, familyName }: { familyId: string; familyName: string }) {
 
 
   return (
     <aside className="flex flex-col w-64 border-r p-4">
-      <h2 className="font-bold mb-6">Family OS</h2>
+      <h2 className="font-bold">Family</h2>
+      <p className="text-sm text-gray-500 mb-6">{familyName}</p>
 
       <nav className="flex flex-col gap-2">
         <Link href="/">Home</Link>
