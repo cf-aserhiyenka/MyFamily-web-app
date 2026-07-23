@@ -5,7 +5,7 @@ export function Sidebar({ familyId }: { familyId: string }) {
 
 
   return (
-    <aside className="w-64 border-r p-4">
+    <aside className="flex flex-col w-64 border-r p-4">
       <h2 className="font-bold mb-6">Family OS</h2>
 
       <nav className="flex flex-col gap-2">
@@ -36,6 +36,9 @@ export function Sidebar({ familyId }: { familyId: string }) {
 
         <Link href={`/family/${familyId}/finance`}>
           Finance
+        </Link>
+        <Link href={`/family/${familyId}/settings`}>
+          Settings
         </Link>
       </nav>
     </aside>
