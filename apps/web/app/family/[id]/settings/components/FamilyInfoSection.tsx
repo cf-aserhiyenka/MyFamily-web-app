@@ -36,7 +36,7 @@ export function FamilyInfoSection({ familyId, family, canManageFamily }: FamilyI
     const response = await fetch(`/api/family/${familyId}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ ...data, avatarBase64: family.avatarBase64 }),
+      body: JSON.stringify(data),
     });
 
     if (!response.ok) {

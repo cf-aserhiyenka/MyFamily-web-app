@@ -2,14 +2,10 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import {
-  createFamilySchema,
-  type CreateFamilyInput,
-  createInvitationSchema,
-  type CreateInvitationInput,
-} from "@myfamily/shared";
+import { createFamilySchema, type CreateFamilyInput } from "@myfamily/shared";
 
 export type FamilyRow = {
   id: string;
@@ -72,46 +68,6 @@ export function FamiliesSection({
     router.refresh();
   }
 
-  const [manageFamilyId, setManageFamilyId] = useState<string | null>(null);
-  const [inviteError, setInviteError] = useState("");
-  const [inviteSuccess, setInviteSuccess] = useState(false);
-  const {
-    register: registerInvite,
-    handleSubmit: handleInviteSubmit,
-    reset: resetInviteForm,
-    formState: { errors: inviteErrors, isSubmitting: isSubmittingInvite },
-  } = useForm<CreateInvitationInput>({
-    resolver: zodResolver(createInvitationSchema),
-  });
-
-  function onManageClick(familyId: string) {
-    setInviteError("");
-    setInviteSuccess(false);
-    resetInviteForm();
-    setManageFamilyId((current) => (current === familyId ? null : familyId));
-  }
-
-  async function onInviteSubmit(data: CreateInvitationInput) {
-    if (!manageFamilyId) return;
-    setInviteError("");
-    setInviteSuccess(false);
-
-    const response = await fetch(`/api/family/${manageFamilyId}/invitations`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(data),
-    });
-
-    if (!response.ok) {
-      const body = await response.json();
-      setInviteError(body.error ?? "Could not send invitation.");
-      return;
-    }
-
-    resetInviteForm();
-    setInviteSuccess(true);
-  }
-
   return (
     <section className="rounded-2xl border border-bark p-6 shadow-sm flex flex-col gap-4">
       <div>
@@ -134,56 +90,13 @@ export function FamiliesSection({
                   </span>
                 </div>
               </div>
-              <button
-                type="button"
-                onClick={() => onManageClick(family.id)}
+              <Link
+                href={`/family/${family.id}/settings`}
                 className="text-xs border border-bark font-medium px-3 py-1.5 rounded-lg transition"
               >
                 Manage
-              </button>
+              </Link>
             </div>
-
-            {manageFamilyId === family.id && (
-              <form
-                className="flex flex-col gap-2 p-3 border-t border-bark"
-                onSubmit={handleInviteSubmit(onInviteSubmit)}
-              >
-                <p className="text-xs font-medium">Invite someone to {family.name}</p>
-                <input
-                  type="email"
-                  placeholder="Email address"
-                  className="rounded-lg border border-bark p-2 text-sm focus:outline-none transition"
-                  {...registerInvite("email")}
-                />
-                {inviteErrors.email && (
-                  <span className="text-xs">{inviteErrors.email.message}</span>
-                )}
-
-                <select
-                  className="rounded-lg border border-bark p-2 text-sm focus:outline-none transition"
-                  {...registerInvite("role")}
-                >
-                  <option value="PARENT">Parent</option>
-                  <option value="CHILD">Child</option>
-                  <option value="GUARDIAN">Guardian</option>
-                  <option value="SENIOR">Senior</option>
-                </select>
-                {inviteErrors.role && (
-                  <span className="text-xs">{inviteErrors.role.message}</span>
-                )}
-
-                {inviteError && <span className="text-xs">{inviteError}</span>}
-                {inviteSuccess && <span className="text-xs">Invitation sent.</span>}
-
-                <button
-                  type="submit"
-                  disabled={isSubmittingInvite}
-                  className="self-start bg-bark text-cream font-medium text-xs px-3 py-2 rounded-lg shadow-sm transition"
-                >
-                  {isSubmittingInvite ? "Sending..." : "Send invitation"}
-                </button>
-              </form>
-            )}
           </li>
         ))}
       </ul>
