@@ -1,3 +1,4 @@
+import { notFound } from "next/navigation";
 import { Sidebar } from "./Sidebar";
 import { prisma } from "@myfamily/db";
 
@@ -14,8 +15,12 @@ export default async function FamilyLayout({
 
   const family = await prisma.family.findUnique({
     where: { id: familyId },
-    select: { name: true },
+    select: { name: true, isActive: true },
   });
+
+  if (!family || !family.isActive) {
+    notFound();
+  }
 
     return(
         <div  className="flex min-h-screen">

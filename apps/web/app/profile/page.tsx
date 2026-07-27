@@ -14,7 +14,7 @@ export default async function ProfilePage() {
   const user = await prisma.user.findUnique({ where: { id: session.user.id } });
   const personNode = await prisma.personNode.findUnique({ where: { userId: session.user.id } });
   const familyMembers = await prisma.familyMember.findMany({
-    where: { userId: session.user.id },
+    where: { userId: session.user.id, family: { isActive: true } },
     include: { family: true },
   });
   const pendingInvitations = await prisma.familyInvitation.findMany({
