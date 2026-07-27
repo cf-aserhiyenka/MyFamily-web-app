@@ -2,6 +2,9 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { createInvitationSchema, type CreateInvitationInput } from "@myfamily/shared";
 
 export type InvitationRow = {
   id: string;
@@ -19,6 +22,37 @@ export function InvitationsSection({ familyId, invitations }: InvitationsSection
   const router = useRouter();
   const [actionError, setActionError] = useState("");
   const [pendingId, setPendingId] = useState<string | null>(null);
+
+  const [showInviteForm, setShowInviteForm] = useState(false);
+  const [inviteError, setInviteError] = useState("");
+  const {
+    register: registerInvite,
+    handleSubmit: handleInviteSubmit,
+    reset: resetInviteForm,
+    formState: { errors: inviteErrors, isSubmitting: isSubmittingInvite },
+  } = useForm<CreateInvitationInput>({
+    resolver: zodResolver(createInvitationSchema),
+  });
+
+  async function onInviteSubmit(data: CreateInvitationInput) {
+    setInviteError("");
+
+    const response = await fetch(`/api/family/${familyId}/invitations`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(data),
+    });
+
+    if (!response.ok) {
+      const body = await response.json();
+      setInviteError(body.error ?? "Could not send invitation.");
+      return;
+    }
+
+    resetInviteForm();
+    setShowInviteForm(false);
+    router.refresh();
+  }
 
   async function onCancel(invitationId: string) {
     setActionError("");
@@ -73,10 +107,52 @@ export function InvitationsSection({ familyId, invitations }: InvitationsSection
 
   return (
     <section className="rounded-2xl border border-bark p-6 shadow-sm flex flex-col gap-4">
-      <div>
-        <h2 className="text-lg font-semibold">Pending Invitations</h2>
-        <p className="text-xs">Invitations sent to join this family that haven't been answered yet.</p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h2 className="text-lg font-semibold">Invitations</h2>
+          <p className="text-xs">Invite new members and manage invitations that haven't been answered yet.</p>
+        </div>
+        <button
+          type="button"
+          onClick={() => setShowInviteForm((shown) => !shown)}
+          className="text-xs border border-bark font-medium px-3 py-1.5 rounded-lg transition"
+        >
+          Invite member
+        </button>
       </div>
+
+      {showInviteForm && (
+        <form className="flex flex-col gap-2 p-3 rounded-xl border border-bark" onSubmit={handleInviteSubmit(onInviteSubmit)}>
+          <input
+            type="email"
+            placeholder="Email address"
+            className="rounded-lg border border-bark p-2 text-sm focus:outline-none transition"
+            {...registerInvite("email")}
+          />
+          {inviteErrors.email && <span className="text-xs">{inviteErrors.email.message}</span>}
+
+          <select
+            className="rounded-lg border border-bark p-2 text-sm focus:outline-none transition"
+            {...registerInvite("role")}
+          >
+            <option value="PARENT">Parent</option>
+            <option value="CHILD">Child</option>
+            <option value="GUARDIAN">Guardian</option>
+            <option value="SENIOR">Senior</option>
+          </select>
+          {inviteErrors.role && <span className="text-xs">{inviteErrors.role.message}</span>}
+
+          {inviteError && <span className="text-xs">{inviteError}</span>}
+
+          <button
+            type="submit"
+            disabled={isSubmittingInvite}
+            className="self-start bg-bark text-cream font-medium text-xs px-3 py-2 rounded-lg shadow-sm transition"
+          >
+            {isSubmittingInvite ? "Sending..." : "Send invitation"}
+          </button>
+        </form>
+      )}
 
       {actionError && <p className="text-xs">{actionError}</p>}
 
