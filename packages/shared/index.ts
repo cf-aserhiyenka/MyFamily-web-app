@@ -4,5 +4,6 @@ export * from "./schemas/profile";
 export * from "./schemas/changePassword";
 export * from "./schemas/family";
 export * from "./schemas/invitation";
+export * from "./schemas/member";
 export * from "./schemas/message";
 export * from "./schemas/finance";
