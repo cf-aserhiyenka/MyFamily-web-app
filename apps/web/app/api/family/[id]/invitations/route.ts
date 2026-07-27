@@ -1,7 +1,8 @@
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
-import { prisma, MemberStatus } from "@myfamily/db";
+import { getFamilyPermissions } from "@/lib/permissions";
+import { prisma } from "@myfamily/db";
 import { createInvitationSchema } from "@myfamily/shared";
 
 const INVITATION_LIFETIME_DAYS = 7;
@@ -25,12 +26,21 @@ export async function POST(
     return NextResponse.json({ error: "Invalid invitation data" }, { status: 400 });
   }
 
-  // Only an active member of the family can invite others to it.
+  const permissions = await getFamilyPermissions(session.user.id, familyId);
+
+  if (!permissions) {
+    return NextResponse.json({ error: "Family not found" }, { status: 404 });
+  }
+
+  if (!permissions.canManageFamily) {
+    return NextResponse.json({ error: "You cannot manage this family" }, { status: 403 });
+  }
+
   const membership = await prisma.familyMember.findUnique({
     where: { userId_familyId: { userId: session.user.id, familyId } },
   });
 
-  if (!membership || membership.status !== MemberStatus.ACTIVE) {
+  if (!membership) {
     return NextResponse.json({ error: "You are not a member of this family" }, { status: 403 });
   }
 
