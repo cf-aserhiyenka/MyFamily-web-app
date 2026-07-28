@@ -37,6 +37,8 @@ model Family {
   budgets       Budget[]
   expenses      Expense[]
   savingGoals   SavingGoal[]
+  albums        Album[]
+  mediaFiles    MediaFile[]
 }
 
 model FamilyMember {
@@ -61,6 +63,8 @@ model FamilyMember {
   paidExpenses             Expense[]                  @relation("ExpensePaidBy")
   createdSavingGoals       SavingGoal[]               @relation("SavingGoalCreatedBy")
   goalContributions        GoalContribution[]         @relation("GoalContributionMember")
+  createdAlbums            Album[]                    @relation("AlbumCreatedBy")
+  uploadedMediaFiles       MediaFile[]                @relation("MediaFileUploadedBy")
 
   @@unique([userId, familyId])
 }
@@ -245,4 +249,56 @@ model GoalContribution {
 
   member   FamilyMember @relation("GoalContributionMember", fields: [memberId], references: [id])
   memberId String
+}
+
+enum AlbumType {
+  DEFAULT
+  CUSTOM
+}
+
+enum MediaType {
+  IMAGE
+}
+
+model Album {
+  id          String    @id @default(uuid())
+  name        String
+  description String?
+  type        AlbumType
+  createdAt   DateTime  @default(now())
+
+  family   Family @relation(fields: [familyId], references: [id])
+  familyId String
+
+  createdBy   FamilyMember? @relation("AlbumCreatedBy", fields: [createdById], references: [id])
+  createdById String?
+
+  coverFile   MediaFile? @relation("AlbumCover", fields: [coverFileId], references: [id])
+  coverFileId String?    @unique
+
+  files MediaFile[] @relation("AlbumFiles")
+}
+
+model MediaFile {
+  id           String    @id @default(uuid())
+  storageKey   String    @unique
+  originalName String
+  mimeType     String
+  sizeBytes    Int
+  type         MediaType
+  width        Int?
+  height       Int?
+  takenAt      DateTime?
+  uploadedAt   DateTime  @default(now())
+
+  family   Family @relation(fields: [familyId], references: [id])
+  familyId String
+
+  album   Album  @relation("AlbumFiles", fields: [albumId], references: [id])
+  albumId String
+
+  uploadedBy   FamilyMember @relation("MediaFileUploadedBy", fields: [uploadedById], references: [id])
+  uploadedById String
+
+  coverOfAlbum Album? @relation("AlbumCover")
 }
