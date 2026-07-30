@@ -20,7 +20,7 @@ export function Sidebar({ familyId, familyName }: { familyId: string; familyName
         </Link>
 
         <Link href={`/family/${familyId}/archive`}>
-          Archive
+          Gallery
         </Link>
 
         <Link href={`/family/${familyId}/calendar`}>
