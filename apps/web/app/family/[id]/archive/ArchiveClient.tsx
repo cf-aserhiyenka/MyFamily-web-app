@@ -1,0 +1,79 @@
+"use client";
+
+import { useState } from "react";
+import { useRouter } from "next/navigation";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { AlbumList, type AlbumRow } from "./components/AlbumList";
+import { MediaGrid } from "./components/MediaGrid";
+import { UploadTile } from "./components/UploadTile";
+import type { MediaFileRow } from "./components/MediaCard";
+
+type ArchiveClientProps = {
+  familyId: string;
+  albums: AlbumRow[];
+  initialAlbumId: string;
+  initialFiles: MediaFileRow[];
+};
+
+export function ArchiveClient({
+  familyId,
+  albums,
+  initialAlbumId,
+  initialFiles,
+}: ArchiveClientProps) {
+  const router = useRouter();
+  const queryClient = useQueryClient();
+  const [selectedAlbumId, setSelectedAlbumId] = useState(initialAlbumId);
+
+  const { data } = useQuery({
+    queryKey: ["media", familyId, selectedAlbumId],
+    queryFn: async () => {
+      const res = await fetch(`/api/family/${familyId}/media?albumId=${selectedAlbumId}`);
+      if (!res.ok) throw new Error("Failed to load files");
+      return res.json() as Promise<{ files: MediaFileRow[] }>;
+    },
+    initialData: selectedAlbumId === initialAlbumId ? { files: initialFiles } : undefined,
+  });
+
+  function refreshMedia() {
+    queryClient.invalidateQueries({ queryKey: ["media", familyId, selectedAlbumId] });
+  }
+
+  function refreshAlbums() {
+    router.refresh();
+  }
+
+  return (
+    <main className="min-h-screen flex">
+      <aside className="w-64 border-r border-bark p-4 flex flex-col gap-2 shrink-0">
+        <h2 className="text-lg font-semibold mb-2">Albums</h2>
+        <AlbumList
+          familyId={familyId}
+          albums={albums}
+          selectedAlbumId={selectedAlbumId}
+          onSelect={setSelectedAlbumId}
+          onChanged={refreshAlbums}
+        />
+      </aside>
+
+      <section className="flex-1 p-4 flex flex-col gap-4">
+        <UploadTile
+          familyId={familyId}
+          albumId={selectedAlbumId}
+          onUploaded={() => {
+            refreshMedia();
+            refreshAlbums();
+          }}
+        />
+        <MediaGrid
+          familyId={familyId}
+          files={data?.files ?? []}
+          onChanged={() => {
+            refreshMedia();
+            refreshAlbums();
+          }}
+        />
+      </section>
+    </main>
+  );
+}

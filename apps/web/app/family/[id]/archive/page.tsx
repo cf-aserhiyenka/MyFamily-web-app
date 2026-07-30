@@ -39,7 +39,7 @@ export default async function ArchivePage({ params }: { params: Promise<{ id: st
 
   const albums = await prisma.album.findMany({
     where: { familyId: familyId },
-    include: { _count: { select: { files: true } }, coverFile: true },
+    include: { _count: { select: { files: true } } },
     orderBy: { createdAt: "asc" },
   });
 
@@ -53,7 +53,6 @@ export default async function ArchivePage({ params }: { params: Promise<{ id: st
       canDelete:
         album.type === AlbumType.CUSTOM && 
         (album.createdById === member.id || member.role === FamilyRole.PARENT || member.role === FamilyRole.GUARDIAN),
-      coverUrl: album.coverFile ? await getViewUrl(album.coverFile.storageKey) : null,
     }))
   );
 
