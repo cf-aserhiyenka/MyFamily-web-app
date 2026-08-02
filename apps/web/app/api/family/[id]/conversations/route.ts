@@ -1,7 +1,8 @@
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
-import { prisma } from "@myfamily/db";
+import { prisma, MemberStatus } from "@myfamily/db";
+import { createGroupConversationSchema } from "@myfamily/shared";
 
 export async function POST(
   request: Request,
@@ -19,8 +20,40 @@ export async function POST(
   const currentMember = await prisma.familyMember.findUnique({
     where: { userId_familyId: { userId: session.user.id, familyId } },
   });
-  if (!currentMember || currentMember.status !== "ACTIVE") {
+  if (!currentMember || currentMember.status !== MemberStatus.ACTIVE) {
     return NextResponse.json({ error: "Not a member of this family" }, { status: 403 });
+  }
+
+  if (body.type === "GROUP_CUSTOM") {
+    const parsed = createGroupConversationSchema.safeParse(body);
+    if (!parsed.success) {
+      return NextResponse.json({ error: "Invalid group data" }, { status: 400 });
+    }
+
+    const memberIds = [...new Set(parsed.data.memberIds)].filter(
+      (id) => id !== currentMember.id
+    );
+
+    const members = await prisma.familyMember.findMany({
+      where: { id: { in: memberIds }, familyId, status: MemberStatus.ACTIVE },
+    });
+    if (members.length !== memberIds.length) {
+      return NextResponse.json({ error: "Invalid group members" }, { status: 400 });
+    }
+
+    const conversation = await prisma.conversation.create({
+      data: {
+        type: "GROUP_CUSTOM",
+        name: parsed.data.name,
+        familyId,
+        createdById: currentMember.id,
+        participants: {
+          create: [currentMember.id, ...memberIds].map((memberId) => ({ memberId })),
+        },
+      },
+    });
+
+    return NextResponse.json({ id: conversation.id }, { status: 201 });
   }
 
   const targetMember = await prisma.familyMember.findUnique({
@@ -29,7 +62,7 @@ export async function POST(
   if (
     !targetMember ||
     targetMember.familyId !== familyId ||
-    targetMember.status !== "ACTIVE" ||
+    targetMember.status !== MemberStatus.ACTIVE ||
     targetMember.id === currentMember.id
   ) {
     return NextResponse.json({ error: "Invalid target member" }, { status: 400 });
