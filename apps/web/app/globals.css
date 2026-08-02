@@ -4,7 +4,7 @@
   --color-cream: #f8f4ec;
   --color-bark: #3d2f24;
   --font-body: var(--font-nunito);
-  --font-heading: var(--font-lato);
+  /* --font-heading: var(--font-lato); */
 
 }
 
@@ -15,7 +15,7 @@
     color: var(--color-bark);
     font-family: var(--font-body);
   }
-  h1, h2, h3, h4, h5, h6 {
+  /* h1, h2, h3, h4, h5, h6 {
     font-family: var(--font-heading);
-  }
+  } */
 }
