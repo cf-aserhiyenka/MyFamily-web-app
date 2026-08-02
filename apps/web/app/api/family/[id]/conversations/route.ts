@@ -25,21 +25,16 @@ export async function POST(
   }
 
   if (body.type === "GROUP_CUSTOM") {
-    const parsed = createGroupConversationSchema.safeParse(body);
-    if (!parsed.success) {
-      return NextResponse.json({ error: "Invalid group data" }, { status: 400 });
-    }
-
-    const memberIds = [...new Set(parsed.data.memberIds)].filter(
-      (id) => id !== currentMember.id
-    );
+    // const parsed = createGroupConversationSchema.safeParse(body);
+    // if (!parsed.success) {
+    //   return NextResponse.json({ error: "Invalid group data" }, { status: 400 });
+    // }
+    const parsed = body;
+    const memberIds = parsed.data.memberIds
 
     const members = await prisma.familyMember.findMany({
       where: { id: { in: memberIds }, familyId, status: MemberStatus.ACTIVE },
     });
-    if (members.length !== memberIds.length) {
-      return NextResponse.json({ error: "Invalid group members" }, { status: 400 });
-    }
 
     const conversation = await prisma.conversation.create({
       data: {
