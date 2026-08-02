@@ -32,10 +32,6 @@ export async function POST(
     const parsed = body;
     const memberIds = parsed.data.memberIds
 
-    const members = await prisma.familyMember.findMany({
-      where: { id: { in: memberIds }, familyId, status: MemberStatus.ACTIVE },
-    });
-
     const conversation = await prisma.conversation.create({
       data: {
         type: "GROUP_CUSTOM",
