@@ -29,13 +29,14 @@ export async function POST(
     // if (!parsed.success) {
     //   return NextResponse.json({ error: "Invalid group data" }, { status: 400 });
     // }
+    console.log("body", body);
     const parsed = body;
-    const memberIds = parsed.data.memberIds
+    const memberIds = parsed.memberIds
 
     const conversation = await prisma.conversation.create({
       data: {
         type: "GROUP_CUSTOM",
-        name: parsed.data.name,
+        name: parsed.name,
         familyId,
         createdById: currentMember.id,
         participants: {
