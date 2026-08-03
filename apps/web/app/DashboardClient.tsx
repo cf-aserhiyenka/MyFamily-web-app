@@ -21,9 +21,9 @@ export function DashboardClient2(props: DashboardClientProps) {
   const hasFamilies = families.length > 0;
 
   return (
-    <main className="min-h-screen p-4 md:p-12">
-      <div className="max-w-4xl mx-auto flex items-center justify-between mb-10">
-        <h1 className="text-2xl font-bold tracking-tight">MyFamily</h1>
+    <main className="min-h-screen p-4">
+      <div className="items-center max-w-4xl mx-auto flex justify-between mb-8">
+        <h1 className="text-2xl font-bold tracking-tight ">MyFamily</h1>
         <div className="flex items-center gap-3">
           <button type="button" onClick={() => signOut()} className="text-sm hover:underline">
             Log out
@@ -49,7 +49,7 @@ export function DashboardClient2(props: DashboardClientProps) {
           <div className="flex flex-col gap-4">
             {families.map((family) => (
               <Link key={family.id} href={`/family/${family.id}/dashboard`}>
-                <div  className="rounded-2xl border border-bark p-4 shadow-sm">
+                <div  className="rounded-2xl border border-bark p-4">
                   <p className="text-sm font-semibold">{family.name}</p>
                   <p className="text-xs mt-1">{family.memberCount} members</p>
                 </div>
@@ -57,11 +57,11 @@ export function DashboardClient2(props: DashboardClientProps) {
             ))}
           </div>
         ) : (
-          <div className="rounded-2xl border border-bark p-6 shadow-sm flex flex-col items-center gap-3 text-center">
-            <p className="text-sm">You dont have any families. Join one or create your own.</p>
+          <div className="border border-bark p-6 flex flex-col items-center gap-3">
+            <p className="text-sm ">You dont have any families. Join one or create your own.</p>
             <Link
               href="/profile"
-              className="bg-bark text-cream font-medium text-sm px-5 py-2.5 rounded-lg shadow-sm transition"
+              className="bg-bark text-cream font-medium text-sm px-5 py-2.5 rounded-lg"
             >
               Start
             </Link>

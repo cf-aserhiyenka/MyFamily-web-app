@@ -9,10 +9,10 @@ export default async function HomePage() {
   
   if (!session?.user?.id) {
     return (
-      <main className="flex min-h-screen flex-col items-center justify-center gap-4">
-        <h1 className="text-4xl">MyFamily</h1>
+      <main className="flex min-h-screen flex-col items-center justify-center gap-5">
+        <h1 className="text-6xl">MyFamily</h1>
         <p>Private space for your family.</p>
-        <div className="flex gap-4">
+        <div className="flex gap-8">
           <Link href="/login">Log in</Link>
           <Link href="/register">Sign up</Link>
         </div>

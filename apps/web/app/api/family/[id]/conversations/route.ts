@@ -1,7 +1,8 @@
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
-import { prisma } from "@myfamily/db";
+import { prisma, MemberStatus } from "@myfamily/db";
+import { createGroupConversationSchema } from "@myfamily/shared";
 
 export async function POST(
   request: Request,
@@ -19,8 +20,32 @@ export async function POST(
   const currentMember = await prisma.familyMember.findUnique({
     where: { userId_familyId: { userId: session.user.id, familyId } },
   });
-  if (!currentMember || currentMember.status !== "ACTIVE") {
+  if (!currentMember || currentMember.status !== MemberStatus.ACTIVE) {
     return NextResponse.json({ error: "Not a member of this family" }, { status: 403 });
+  }
+
+  if (body.type === "GROUP_CUSTOM") {
+    // const parsed = createGroupConversationSchema.safeParse(body);
+    // if (!parsed.success) {
+    //   return NextResponse.json({ error: "Invalid group data" }, { status: 400 });
+    // }
+    console.log("body", body);
+    const parsed = body;
+    const memberIds = parsed.memberIds
+
+    const conversation = await prisma.conversation.create({
+      data: {
+        type: "GROUP_CUSTOM",
+        name: parsed.name,
+        familyId,
+        createdById: currentMember.id,
+        participants: {
+          create: [currentMember.id, ...memberIds].map((memberId) => ({ memberId })),
+        },
+      },
+    });
+
+    return NextResponse.json({ id: conversation.id }, { status: 201 });
   }
 
   const targetMember = await prisma.familyMember.findUnique({
@@ -29,7 +54,7 @@ export async function POST(
   if (
     !targetMember ||
     targetMember.familyId !== familyId ||
-    targetMember.status !== "ACTIVE" ||
+    targetMember.status !== MemberStatus.ACTIVE ||
     targetMember.id === currentMember.id
   ) {
     return NextResponse.json({ error: "Invalid target member" }, { status: 400 });

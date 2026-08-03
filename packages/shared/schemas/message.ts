@@ -5,3 +5,10 @@ export const sendMessageSchema = z.object({
 });
 
 export type SendMessageInput = z.infer<typeof sendMessageSchema>;
+
+export const createGroupConversationSchema = z.object({
+  name: z.string().trim().min(1, "Group name cannot be empty").max(100, "Group name is too long"),
+  memberIds: z.array(z.string()).min(1, "Select at least one member"),
+});
+
+export type CreateGroupConversationInput = z.infer<typeof createGroupConversationSchema>;

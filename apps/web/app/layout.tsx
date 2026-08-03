@@ -1,11 +1,20 @@
 import type { Metadata } from "next";
-import { DM_Sans } from "next/font/google";
+import { DM_Sans, Outfit, Nunito, Manrope,  Lato, Playfair_Display} from "next/font/google";
 import "./globals.css";
 import { Providers } from "./providers";
 
-const dmSans = DM_Sans({
+const bodyFont = Nunito({
   subsets: ["latin"],
+  // variable: "--font-nunito",
+
 });
+
+// const heading = Lato({
+//   subsets: ["latin"],
+//   variable: "--font-lato",
+// });
+
+//className={`${bodyFont.variable} ${headingFont.variable}`}>
 
 export const metadata: Metadata = {
   title: "MyFamily",
@@ -19,7 +28,7 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      <body className={dmSans.className + " text-blue-900"}>
+      <body className={bodyFont.className}>
         <Providers>{children}</Providers>
       </body>
     </html>
