@@ -8,6 +8,7 @@ type ConversationRow = {
   id: string;
   type: "GROUP_DEFAULT" | "GROUP_CUSTOM" | "DIRECT";
   name: string | null;
+  participantNames: string[];
 };
 
 type MessageRow = {
@@ -122,6 +123,8 @@ export function ChatClient({ familyId, memberId, conversations, members }: ChatC
     return conversation.type === "GROUP_DEFAULT" ? "Whole family" : "Group chat";
   }
 
+  const selectedConversation = conversations.find((c) => c.id === selectedId);
+
   return (
     <main className="min-h-screen flex">
       <aside className="w-64 border-r border-bark p-4 flex flex-col gap-2 shrink-0">
@@ -191,6 +194,13 @@ export function ChatClient({ familyId, memberId, conversations, members }: ChatC
       </aside>
 
       <section className="flex-1 flex flex-col p-4">
+        {selectedConversation && (
+          <div className="border-b border-bark pb-2 mb-3">
+            <h3 className="font-semibold">{conversationLabel(selectedConversation)}</h3>
+            <p className="text-xs">{selectedConversation.participantNames.join(", ")}</p>
+          </div>
+        )}
+
         <div className="flex-1 flex flex-col gap-3">
           {data?.messages.map((message) => (
             <div key={message.id}>

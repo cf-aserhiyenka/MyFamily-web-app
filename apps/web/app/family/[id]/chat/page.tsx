@@ -48,7 +48,8 @@ export default async function ChatPage({ params }: { params: Promise<{ id: strin
       familyId={familyId}
       memberId={member.id}
       conversations={conversations.map((conversation) => {
-        const other = conversation.participants[0]?.member.personNode;
+        const others = conversation.participants.map((p) => p.member.personNode);
+        const other = others[0];
         return {
           id: conversation.id,
           type: conversation.type,
@@ -56,6 +57,7 @@ export default async function ChatPage({ params }: { params: Promise<{ id: strin
             conversation.type === "DIRECT" && other
               ? `${other.firstName} ${other.lastName}`
               : conversation.name,
+          participantNames: others.map((p) => `${p.firstName} ${p.lastName}`),
         };
       })}
       members={members.map((m) => ({
