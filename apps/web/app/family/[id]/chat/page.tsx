@@ -1,7 +1,7 @@
 import { redirect, notFound } from "next/navigation";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
-import { prisma } from "@myfamily/db";
+import { prisma, MemberStatus } from "@myfamily/db";
 import { ChatClient } from "./ChatClient";
 
 export default async function ChatPage({ params }: { params: Promise<{ id: string }> }) {
@@ -18,7 +18,7 @@ export default async function ChatPage({ params }: { params: Promise<{ id: strin
     },
   });
 
-  if (!member || member.status !== "ACTIVE") {
+  if (!member || member.status !== MemberStatus.ACTIVE) {
     notFound();
   }
 
@@ -39,7 +39,7 @@ export default async function ChatPage({ params }: { params: Promise<{ id: strin
   });
 
   const members = await prisma.familyMember.findMany({
-    where: { familyId, status: "ACTIVE", id: { not: member.id } },
+    where: { familyId, status: MemberStatus.ACTIVE, id: { not: member.id } },
     include: { personNode: true },
   });
 
