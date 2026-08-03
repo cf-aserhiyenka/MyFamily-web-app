@@ -3,26 +3,10 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-
-type ConversationRow = {
-  id: string;
-  type: "GROUP_DEFAULT" | "GROUP_CUSTOM" | "DIRECT";
-  name: string | null;
-  participantNames: string[];
-};
-
-type MessageRow = {
-  id: string;
-  content: string;
-  sentAt: string;
-  senderId: string;
-  senderName: string;
-};
-
-type MemberRow = {
-  id: string;
-  name: string;
-};
+import { GroupsSidebar } from "./components/GroupsSidebar";
+import { ConversationPanel } from "./components/ConversationPanel";
+import { MembersSidebar } from "./components/MembersSidebar";
+import type { ConversationRow, MemberRow, MessageRow } from "./types";
 
 type ChatClientProps = {
   familyId: string;
@@ -31,26 +15,11 @@ type ChatClientProps = {
   members: MemberRow[];
 };
 
-export function ChatClient({ familyId, memberId, conversations, members }: ChatClientProps) {
+export function ChatClient({ familyId, conversations, members }: ChatClientProps) {
   const router = useRouter();
   const [selectedId, setSelectedId] = useState<string | null>(conversations[0]?.id ?? null);
   const [content, setContent] = useState("");
-  const [showGroupForm, setShowGroupForm] = useState(false);
-  const [groupName, setGroupName] = useState("");
-  const [selectedMembers, setSelectedMembers] = useState<Set<string>>(new Set());
   const queryClient = useQueryClient();
-
-  function switchMember(memberId: string) {
-    setSelectedMembers((prev) => {
-      const next = new Set(prev);
-      if (next.has(memberId)) {
-        next.delete(memberId);
-      } else {
-        next.add(memberId);
-      }
-      return next;
-    });
-  }
 
   const { data } = useQuery({
     queryKey: ["messages", selectedId],
@@ -96,155 +65,43 @@ export function ChatClient({ familyId, memberId, conversations, members }: ChatC
   });
 
   const createGroup = useMutation({
-    mutationFn: async () => {
+    mutationFn: async ({ name, memberIds }: { name: string; memberIds: string[] }) => {
       const res = await fetch(`/api/family/${familyId}/conversations`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          type: "GROUP_CUSTOM",
-          name: groupName,
-          memberIds: [...selectedMembers],
-        }),
+        body: JSON.stringify({ type: "GROUP_CUSTOM", name, memberIds }),
       });
       if (!res.ok) throw new Error("Failed to create group");
       return res.json() as Promise<{ id: string }>;
     },
     onSuccess: (result) => {
       setSelectedId(result.id);
-      setGroupName("");
-      setSelectedMembers(new Set());
-      setShowGroupForm(false);
       router.refresh();
     },
   });
-
-  function conversationLabel(conversation: ConversationRow) {
-    if (conversation.name) return conversation.name;
-    return conversation.type === "GROUP_DEFAULT" ? "Whole family" : "Group chat";
-  }
 
   const selectedConversation = conversations.find((c) => c.id === selectedId);
 
   return (
     <main className="min-h-screen flex">
-      <aside className="w-64 border-r border-bark p-4 flex flex-col gap-2 shrink-0">
-        <div className="flex items-center justify-between mb-2">
-          <h2 className="text-lg font-semibold">Group chats</h2>
-          <button
-            type="button"
-            onClick={() => setShowGroupForm((shown) => !shown)}
-            className="text-xs border border-bark px-2 py-1 rounded-lg"
-          >
-            New group
-          </button>
-        </div>
+      <GroupsSidebar
+        conversations={conversations}
+        selectedId={selectedId}
+        onSelect={setSelectedId}
+        members={members}
+        onCreateGroup={(name, memberIds) => createGroup.mutate({ name, memberIds })}
+        isCreating={createGroup.isPending}
+      />
 
-        {showGroupForm && (
-          <form
-            className="flex flex-col gap-2 p-3 rounded-lg border border-bark mb-2"
-            onSubmit={(e) => {
-              e.preventDefault();
-              if (groupName.trim() && selectedMembers.size > 0) createGroup.mutate();
-            }}
-          >
-            <input
-              type="text"
-              value={groupName}
-              onChange={(e) => setGroupName(e.target.value)}
-              placeholder="Group name"
-              className="border border-bark rounded-lg px-2 py-1 text-sm"
-            />
-            <div className="flex flex-col gap-1">
-              {members.map((member) => (
-                <label key={member.id} className="flex items-center gap-2 text-sm">
-                  <input
-                    type="checkbox"
-                    checked={selectedMembers.has(member.id)}
-                    onChange={() => switchMember(member.id)}
-                  />
-                  {member.name}
-                </label>
-              ))}
-            </div>
-            <button
-              type="submit"
-              disabled={createGroup.isPending}
-              className="bg-bark text-cream text-sm px-3 py-1.5 rounded-lg"
-            >
-              {createGroup.isPending ? "Creating..." : "Create"}
-            </button>
-          </form>
-        )}
+      <ConversationPanel
+        conversation={selectedConversation}
+        messages={data?.messages}
+        content={content}
+        onContentChange={setContent}
+        onSend={() => sendMessage.mutate()}
+      />
 
-        {conversations
-          .filter((conversation) => conversation.type !== "DIRECT")
-          .map((conversation) => (
-            <button
-              key={conversation.id}
-              type="button"
-              onClick={() => setSelectedId(conversation.id)}
-              className={
-                "text-left px-3 py-2 rounded-lg " +
-                (selectedId === conversation.id ? "bg-bark text-cream" : "")
-              }
-            >
-              {conversationLabel(conversation)}
-            </button>
-          ))}
-      </aside>
-
-      <section className="flex-1 flex flex-col p-4">
-        {selectedConversation && (
-          <div className="border-b border-bark pb-2 mb-3">
-            <h3 className="font-semibold">{conversationLabel(selectedConversation)}</h3>
-            <p className="text-xs">{selectedConversation.participantNames.join(", ")}</p>
-          </div>
-        )}
-
-        <div className="flex-1 flex flex-col gap-3">
-          {data?.messages.map((message) => (
-            <div key={message.id}>
-              <p className="text-xs">{message.senderName}</p>
-              <p className="border border-bark rounded-lg px-3 py-2 inline-block">
-                {message.content}
-              </p>
-            </div>
-          ))}
-        </div>
-
-        <form
-          className="flex gap-2 mt-4"
-          onSubmit={(e) => {
-            e.preventDefault();
-            if (content.trim()) sendMessage.mutate();
-          }}
-        >
-          <input
-            type="text"
-            value={content}
-            onChange={(e) => setContent(e.target.value)}
-            placeholder="Type a message..."
-            className="flex-1 border border-bark rounded-lg px-3 py-2"
-          />
-          <button type="submit" className="bg-bark text-cream px-4 py-2 rounded-lg">
-            Send
-          </button>
-        </form>
-      </section>
-
-      <aside className="w-64 border-l border-bark p-4 flex flex-col gap-2 shrink-0">
-        <h2 className="text-lg font-semibold mb-2">Chats</h2>
-        {members.map((member) => (
-          <button
-            key={member.id}
-            type="button"
-            onClick={() => startConversation.mutate(member.id)}
-            className="text-left px-3 py-2 rounded-lg"
-          >
-            {member.name}
-          </button>
-        ))}
-      </aside>
+      <MembersSidebar members={members} onStartConversation={(id) => startConversation.mutate(id)} />
     </main>
   );
 }
