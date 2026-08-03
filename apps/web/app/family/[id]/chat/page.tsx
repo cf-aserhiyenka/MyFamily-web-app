@@ -1,7 +1,7 @@
 import { redirect, notFound } from "next/navigation";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
-import { prisma } from "@myfamily/db";
+import { prisma, MemberStatus } from "@myfamily/db";
 import { ChatClient } from "./ChatClient";
 
 export default async function ChatPage({ params }: { params: Promise<{ id: string }> }) {
@@ -18,7 +18,7 @@ export default async function ChatPage({ params }: { params: Promise<{ id: strin
     },
   });
 
-  if (!member || member.status !== "ACTIVE") {
+  if (!member || member.status !== MemberStatus.ACTIVE) {
     notFound();
   }
 
@@ -39,7 +39,7 @@ export default async function ChatPage({ params }: { params: Promise<{ id: strin
   });
 
   const members = await prisma.familyMember.findMany({
-    where: { familyId, status: "ACTIVE", id: { not: member.id } },
+    where: { familyId, status: MemberStatus.ACTIVE, id: { not: member.id } },
     include: { personNode: true },
   });
 
@@ -48,7 +48,8 @@ export default async function ChatPage({ params }: { params: Promise<{ id: strin
       familyId={familyId}
       memberId={member.id}
       conversations={conversations.map((conversation) => {
-        const other = conversation.participants[0]?.member.personNode;
+        const others = conversation.participants.map((p) => p.member.personNode);
+        const other = others[0];
         return {
           id: conversation.id,
           type: conversation.type,
@@ -56,6 +57,7 @@ export default async function ChatPage({ params }: { params: Promise<{ id: strin
             conversation.type === "DIRECT" && other
               ? `${other.firstName} ${other.lastName}`
               : conversation.name,
+          participantNames: others.map((p) => `${p.firstName} ${p.lastName}`),
         };
       })}
       members={members.map((m) => ({
