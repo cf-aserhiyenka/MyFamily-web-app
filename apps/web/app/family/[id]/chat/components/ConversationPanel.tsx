@@ -8,6 +8,8 @@ type ConversationPanelProps = {
   content: string;
   onContentChange: (content: string) => void;
   onSend: () => void;
+  memberId: string;
+
 };
 
 export function ConversationPanel({
@@ -16,7 +18,10 @@ export function ConversationPanel({
   content,
   onContentChange,
   onSend,
+  memberId,
+
 }: ConversationPanelProps) {
+  
   return (
     <section className="flex-1 flex flex-col p-4">
       {conversation && (
@@ -25,16 +30,14 @@ export function ConversationPanel({
           <p className="text-xs">{conversation.participantNames.join(", ")}</p>
         </div>
       )}
-
-      <div className="flex-1 flex flex-col gap-3">
+      <div className="flex-1 flex flex-col gap-3 overflow-y-auto p-4 ">
         {messages?.map((message) => (
-          <div key={message.id}>
+          <div key={message.id} className={message.senderId === memberId ? "text-right" : "text-left"}>
             <p className="text-xs">{message.senderName}</p>
             <p className="border border-bark rounded-lg px-3 py-2 inline-block">{message.content}</p>
           </div>
         ))}
       </div>
-
       <form
         className="flex gap-2 mt-4"
         onSubmit={(e) => {

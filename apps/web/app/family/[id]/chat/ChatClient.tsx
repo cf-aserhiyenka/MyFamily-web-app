@@ -15,7 +15,7 @@ type ChatClientProps = {
   members: MemberRow[];
 };
 
-export function ChatClient({ familyId, conversations, members }: ChatClientProps) {
+export function ChatClient({ familyId, conversations, members,memberId }: ChatClientProps) {
   const router = useRouter();
   const [selectedId, setSelectedId] = useState<string | null>(conversations[0]?.id ?? null);
   const [content, setContent] = useState("");
@@ -80,10 +80,24 @@ export function ChatClient({ familyId, conversations, members }: ChatClientProps
     },
   });
 
+  const leaveGroup = useMutation({
+    mutationFn: async (conversationId: string) => {
+      const res = await fetch(`/api/conversations/${conversationId}`, {
+        method: "PATCH",
+      });
+      if (!res.ok) throw new Error("Failed to leave conversation");
+      return res.json();
+    },
+    onSuccess: (_result, conversationId) => {
+      if (selectedId === conversationId) setSelectedId(null);
+      router.refresh();
+    },
+  });
+
   const selectedConversation = conversations.find((c) => c.id === selectedId);
 
   return (
-    <main className="min-h-screen flex">
+    <main className="h-screen flex">
       <GroupsSidebar
         conversations={conversations}
         selectedId={selectedId}
@@ -91,6 +105,7 @@ export function ChatClient({ familyId, conversations, members }: ChatClientProps
         members={members}
         onCreateGroup={(name, memberIds) => createGroup.mutate({ name, memberIds })}
         isCreating={createGroup.isPending}
+        onLeaveGroup={(conversationId) => leaveGroup.mutate(conversationId)}
       />
 
       <ConversationPanel
@@ -99,6 +114,8 @@ export function ChatClient({ familyId, conversations, members }: ChatClientProps
         content={content}
         onContentChange={setContent}
         onSend={() => sendMessage.mutate()}
+        memberId={memberId}
+
       />
 
       <MembersSidebar members={members} onStartConversation={(id) => startConversation.mutate(id)} />
