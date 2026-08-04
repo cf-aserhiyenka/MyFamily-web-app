@@ -20,5 +20,5 @@ export type MemberRow = {
 
 export function conversationLabel(conversation: ConversationRow) {
   if (conversation.name) return conversation.name;
-  return conversation.type === "GROUP_DEFAULT" ? "Whole family" : "Group chat";
+//  return conversation.type === "GROUP_DEFAULT" ? "Whole family" : "Group chat";
 }
