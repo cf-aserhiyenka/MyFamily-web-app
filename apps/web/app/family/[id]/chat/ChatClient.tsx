@@ -15,7 +15,7 @@ type ChatClientProps = {
   members: MemberRow[];
 };
 
-export function ChatClient({ familyId, conversations, members }: ChatClientProps) {
+export function ChatClient({ familyId, conversations, members,memberId }: ChatClientProps) {
   const router = useRouter();
   const [selectedId, setSelectedId] = useState<string | null>(conversations[0]?.id ?? null);
   const [content, setContent] = useState("");
@@ -99,6 +99,8 @@ export function ChatClient({ familyId, conversations, members }: ChatClientProps
         content={content}
         onContentChange={setContent}
         onSend={() => sendMessage.mutate()}
+        memberId={memberId}
+
       />
 
       <MembersSidebar members={members} onStartConversation={(id) => startConversation.mutate(id)} />
