@@ -10,6 +10,7 @@ type GroupsSidebarProps = {
   members: MemberRow[];
   onCreateGroup: (name: string, memberIds: string[]) => void;
   isCreating: boolean;
+  onLeaveGroup: (conversationId: string) => void;
 };
 
 export function GroupsSidebar({
@@ -19,6 +20,7 @@ export function GroupsSidebar({
   members,
   onCreateGroup,
   isCreating,
+  onLeaveGroup,
 }: GroupsSidebarProps) {
   const [showGroupForm, setShowGroupForm] = useState(false);
   const [groupName, setGroupName] = useState("");
@@ -92,17 +94,31 @@ export function GroupsSidebar({
       {conversations
         .filter((conversation) => conversation.type !== "DIRECT")
         .map((conversation) => (
-          <button
+          <div
             key={conversation.id}
-            type="button"
-            onClick={() => onSelect(conversation.id)}
             className={
-              "text-left px-3 py-2 rounded-lg " +
-              (selectedId === conversation.id ? "bg-bark text-cream" : "")
+              "flex items-center gap-2 border border-bark px-3 py-2 rounded-lg transition-shadow " +
+              (selectedId === conversation.id ? "shadow-lg" : "")
             }
           >
-            {conversationLabel(conversation)}
-          </button>
+            <button
+              type="button"
+              onClick={() => onSelect(conversation.id)}
+              className={
+                "flex-1 text-left transition-transform " +
+                (selectedId === conversation.id ? "px-3 py-2 text-bark scale-105" : "")
+              }
+            >
+              {conversationLabel(conversation)}
+            </button>
+            <button
+              type="button"
+              onClick={() => onLeaveGroup(conversation.id)}
+              className="text-xs border border-bark px-2 py-1 rounded-lg"
+            >
+              Leave
+            </button>
+          </div>
         ))}
     </aside>
   );

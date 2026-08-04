@@ -80,6 +80,20 @@ export function ChatClient({ familyId, conversations, members,memberId }: ChatCl
     },
   });
 
+  const leaveGroup = useMutation({
+    mutationFn: async (conversationId: string) => {
+      const res = await fetch(`/api/conversations/${conversationId}`, {
+        method: "PATCH",
+      });
+      if (!res.ok) throw new Error("Failed to leave conversation");
+      return res.json();
+    },
+    onSuccess: (_result, conversationId) => {
+      if (selectedId === conversationId) setSelectedId(null);
+      router.refresh();
+    },
+  });
+
   const selectedConversation = conversations.find((c) => c.id === selectedId);
 
   return (
@@ -91,6 +105,7 @@ export function ChatClient({ familyId, conversations, members,memberId }: ChatCl
         members={members}
         onCreateGroup={(name, memberIds) => createGroup.mutate({ name, memberIds })}
         isCreating={createGroup.isPending}
+        onLeaveGroup={(conversationId) => leaveGroup.mutate(conversationId)}
       />
 
       <ConversationPanel
