@@ -83,7 +83,7 @@ export function ChatClient({ familyId, conversations, members,memberId }: ChatCl
   const selectedConversation = conversations.find((c) => c.id === selectedId);
 
   return (
-    <main className="min-h-screen flex">
+    <main className="h-screen flex">
       <GroupsSidebar
         conversations={conversations}
         selectedId={selectedId}

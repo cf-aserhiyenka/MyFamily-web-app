@@ -30,8 +30,7 @@ export function ConversationPanel({
           <p className="text-xs">{conversation.participantNames.join(", ")}</p>
         </div>
       )}
-
-      <div className="flex-1 flex flex-col gap-3">
+      <div className="flex-1 flex flex-col gap-3 overflow-y-auto p-4 ">
         {messages?.map((message) => (
           <div key={message.id} className={message.senderId === memberId ? "text-right" : "text-left"}>
             <p className="text-xs">{message.senderName}</p>
@@ -39,7 +38,6 @@ export function ConversationPanel({
           </div>
         ))}
       </div>
-
       <form
         className="flex gap-2 mt-4"
         onSubmit={(e) => {
