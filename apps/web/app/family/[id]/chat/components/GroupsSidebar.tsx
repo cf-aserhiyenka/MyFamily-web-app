@@ -47,6 +47,12 @@ export function GroupsSidebar({
     setShowGroupForm(false);
   }
 
+  function handleCancel() {
+    setGroupName("");
+    setSelectedMembers(new Set());
+    setShowGroupForm(false);
+  }
+
   return (
     <aside className="w-64 border-r border-bark p-4 flex flex-col gap-2 shrink-0">
       <div className="flex items-center justify-between mb-2">
@@ -81,13 +87,22 @@ export function GroupsSidebar({
               </label>
             ))}
           </div>
-          <button
-            type="submit"
-            disabled={isCreating}
-            className="bg-bark text-cream text-sm px-3 py-1.5 rounded-lg"
-          >
-            {isCreating ? "Creating..." : "Create"}
-          </button>
+          <div className="flex gap-2">
+            <button
+              type="submit"
+              disabled={isCreating}
+              className="flex-1 bg-bark text-cream text-sm px-3 py-1.5 rounded-lg"
+            >
+              {isCreating ? "Creating..." : "Create"}
+            </button>
+            <button
+              type="button"
+              onClick={handleCancel}
+              className="flex-1 border border-bark text-sm px-3 py-1.5 rounded-lg"
+            >
+              Cancel
+            </button>
+          </div>
         </form>
       )}
 
