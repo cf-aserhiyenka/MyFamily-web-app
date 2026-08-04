@@ -33,11 +33,9 @@ export function ConversationPanel({
 
       <div className="flex-1 flex flex-col gap-3">
         {messages?.map((message) => (
-          <div key={message.id}>
-            <div className={`text-xs ${message.senderId === memberId ? "text-right" : "text-left"}`}>
-              <p className="text-xs">{message.senderName}</p>
-              <p className="border border-bark rounded-lg px-3 py-2 inline-block">{message.content}</p>
-            </div>
+          <div key={message.id} className={message.senderId === memberId ? "text-right" : "text-left"}>
+            <p className="text-xs">{message.senderName}</p>
+            <p className="border border-bark rounded-lg px-3 py-2 inline-block">{message.content}</p>
           </div>
         ))}
       </div>
