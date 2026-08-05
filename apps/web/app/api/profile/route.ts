@@ -38,3 +38,30 @@ export async function PATCH(request: Request) {
 
   return NextResponse.json({ ok: true });
 }
+
+export async function DELETE() {
+  const session = await getServerSession(authOptions);
+
+  if (!session?.user?.id) {
+    return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
+  }
+
+  const ownedFamily = await prisma.family.findFirst({
+    where: { createdById: session.user.id, isActive: true },
+    select: { id: true },
+  });
+
+  if (ownedFamily) {
+    return NextResponse.json(
+      { error: "Delete or transfer the families you own before deleting your account." },
+      { status: 400 }
+    );
+  }
+
+  await prisma.user.update({
+    where: { id: session.user.id },
+    data: { isActive: false },
+  });
+
+  return NextResponse.json({ ok: true });
+}

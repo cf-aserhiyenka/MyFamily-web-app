@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { signOut } from "next-auth/react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { updateProfileSchema, type UpdateProfileInput } from "@myfamily/shared";
@@ -55,6 +56,30 @@ export function PersonalInfoForm({
   }
 
   const [showPasswordForm, setShowPasswordForm] = useState(false);
+
+  const [deleteError, setDeleteError] = useState("");
+  const [isDeleting, setIsDeleting] = useState(false);
+
+  async function onDeleteAccount() {
+    const confirmed = window.confirm(
+      "This will permanently deactivate your account. Are you sure?"
+    );
+    if (!confirmed) return;
+
+    setDeleteError("");
+    setIsDeleting(true);
+
+    const response = await fetch("/api/profile", { method: "DELETE" });
+
+    if (!response.ok) {
+      const body = await response.json();
+      setDeleteError(body.error ?? "Could not delete account.");
+      setIsDeleting(false);
+      return;
+    }
+
+    await signOut({ callbackUrl: "/login" });
+  }
 
   return (
     <section className="lg:col-span-2 rounded-2xl border border-bark p-6 shadow-sm flex flex-col gap-6">
@@ -132,14 +157,7 @@ export function PersonalInfoForm({
 
         {saveError && <p className="text-sm">{saveError}</p>}
 
-        <div className="flex items-center justify-between border-t border-bark pt-5 mt-2">
-          <button
-            type="button"
-            onClick={() => setShowPasswordForm((shown) => !shown)}
-            className="text-sm font-semibold hover:underline transition"
-          >
-            Change password
-          </button>
+        <div className="flex items-center border-t border-bark pt-5 mt-2">
           <button
             type="submit"
             className="bg-bark text-cream font-medium text-sm px-5 py-2.5 rounded-lg shadow-sm transition"
@@ -149,7 +167,30 @@ export function PersonalInfoForm({
         </div>
       </form>
 
+      <div className="flex items-center justify-end border-t border-bark pt-5 mt-2">
+        <button
+          type="button"
+          onClick={() => setShowPasswordForm((shown) => !shown)}
+          className="text-cream font-medium text-sm px-5 py-2.5 rounded-lg shadow-sm transition bg-bark"
+        >
+          Change password
+        </button>
+      </div>
       {showPasswordForm && <ChangePasswordForm />}
+      <div className="flex items-center justify-between border-t border-bark pt-5 mt-2">
+        <div>
+          <p className="text-sm font-semibold">Delete account</p>
+          {deleteError && <p className="text-xs">{deleteError}</p>}
+        </div>
+        <button
+          type="button"
+          disabled={isDeleting}
+          onClick={onDeleteAccount}
+          className="text-cream font-medium text-sm px-5 py-2.5 rounded-lg shadow-sm transition bg-red-600 hover:bg-red-800 disabled:opacity-50"
+        >
+          {isDeleting ? "Deleting..." : "Delete"}
+        </button>
+      </div>
     </section>
   );
 }
