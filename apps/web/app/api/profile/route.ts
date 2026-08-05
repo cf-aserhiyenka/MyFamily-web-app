@@ -32,6 +32,7 @@ export async function PATCH(request: Request) {
       lastName,
       birthDate: birthDate ? new Date(birthDate) : null,
       userId: session.user.id,
+      createdById: session.user.id,
     },
   });
 

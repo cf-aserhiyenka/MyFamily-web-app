@@ -35,3 +35,7 @@ export async function getFamilyPermissions(
     canDeleteFamily: isOwner,
   };
 }
+
+export function canEditPersonNode(userId: string, personNode: { createdById: string }): boolean {
+  return personNode.createdById === userId;
+}
