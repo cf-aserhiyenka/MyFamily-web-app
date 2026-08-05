@@ -7,19 +7,21 @@ datasource db {
 }
 
 model User {
-  id           String   @id @default(uuid())
-  email        String   @unique
-  passwordHash String
-  isActive     Boolean  @default(true)
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+  id            String    @id @default(uuid())
+  email         String    @unique
+  passwordHash  String
+  isActive      Boolean   @default(true)
+  emailVerified DateTime?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
 
   createdFamilies Family[]
   familyMembers   FamilyMember[]
   personNode      PersonNode?
 
-  createdPersonNodes     PersonNode[]     @relation("PersonNodeCreatedBy")
-  createdPersonRelations PersonRelation[] @relation("PersonRelationCreatedBy")
+  createdPersonNodes      PersonNode[]             @relation("PersonNodeCreatedBy")
+  createdPersonRelations  PersonRelation[]         @relation("PersonRelationCreatedBy")
+  emailVerificationTokens EmailVerificationToken[]
 }
 
 model Family {
@@ -159,6 +161,18 @@ model PersonRelation {
   createdById String
 
   @@unique([familyId, personAId, personBId, relation])
+}
+
+model EmailVerificationToken {
+  id        String    @id @default(uuid())
+  token     String    @unique
+  email     String
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime  @default(now())
+
+  user   User   @relation(fields: [userId], references: [id])
+  userId String
 }
 
 model FamilyInvitation {
