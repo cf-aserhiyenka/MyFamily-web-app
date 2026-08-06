@@ -1,62 +1,88 @@
-"use client";
+import { redirect, notFound } from "next/navigation";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/lib/auth";
+import { prisma } from "@myfamily/db";
+import { getViewUrl } from "@/lib/s3";
 
-import { useState } from "react";
+export default async function DashboardPage({ params }: { params: Promise<{ id: string }> }) {
+  const { id: familyId } = await params;
+  const session = await getServerSession(authOptions);
 
-export default function DashboardPrototypePage() {
-  const [collapsed, setCollapsed] = useState(false);
+  if (!session?.user?.id) {
+    redirect("/login");
+  }
+
+  const member = await prisma.familyMember.findUnique({
+    where: { userId_familyId: { userId: session.user.id, familyId } },
+  });
+
+  if (!member || member.status !== "ACTIVE") {
+    notFound();
+  }
+
+  const participants = await prisma.conversationParticipant.findMany({
+    where: { memberId: member.id, leftAt: null },
+    include: { conversation: true },
+  });
+
+  const unreadByConversation = await Promise.all(
+    participants.map(async (p) => {
+      const count = await prisma.message.count({
+        where: {
+          conversationId: p.conversationId,
+          senderId: { not: member.id },
+          isDeleted: false,
+          sentAt: { gt: p.lastReadAt ?? p.joinedAt },
+        },
+      });
+      return { name: p.conversation.name ?? "Conversation", count };
+    })
+  );
+
+  const totalUnread = unreadByConversation.reduce((sum, c) => sum + c.count, 0);
+
+  const [randomPhoto] = await prisma.$queryRaw<{ storageKey: string; originalName: string }[]>`
+    SELECT "storageKey", "originalName"
+    FROM "MediaFile"
+    WHERE "familyId" = ${familyId}
+    ORDER BY RANDOM()
+    LIMIT 1
+  `;
+
+  const randomPhotoUrl = randomPhoto ? await getViewUrl(randomPhoto.storageKey) : null;
 
   return (
-    <div className="min-h-screen flex flex-col md:flex-row">
-      <main className="flex-1 p-4 md:p-8 flex flex-col gap-6">
-        <div>
-          <h1 className="text-xl font-bold">Dashboard</h1>
-          <p className="text-sm mt-1">POINTS 99999999</p>
-        </div>
+    <main className="flex-1 p-4 md:p-8 flex flex-col gap-6">
+      <h1 className="text-xl font-bold">Dashboard</h1>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {/* <section className="rounded-2xl border border-bark p-4 shadow-sm">
-            <h2 className="font-semibold mb-2">text</h2>
-            <ul className="text-sm flex flex-col gap-1">
-              <li>1</li>
-              <li>2</li>
-            </ul>
-          </section> */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <section className="rounded-2xl border border-bark p-4 shadow-sm">
+          <h2 className="font-semibold mb-2">Unread messages</h2>
+          <p className="text-sm">{totalUnread} unread</p>
+          <ul className="text-sm flex flex-col gap-1 mt-2">
+            {unreadByConversation
+              .filter((c) => c.count > 0)
+              .map((c, i) => (
+                <li key={i}>
+                  {c.name}: {c.count}
+                </li>
+              ))}
+          </ul>
+        </section>
 
-          <section className="rounded-2xl border border-bark p-4 shadow-sm">
-            <h2 className="font-semibold mb-2">Tasks</h2>
-            <ul className="text-sm flex flex-col gap-2">
-              <li className="flex items-center justify-between">
-                <span>Clean house (200 points)</span>
-                <button type="button" className="text-xs border border-bark rounded px-2 py-1">
-                  start
-                </button>
-              </li>
-              <li className="flex items-center justify-between">
-                <span>Clean up (20 points)</span>
-                <button type="button" className="text-xs border border-bark rounded px-2 py-1">
-                  start
-                </button>
-              </li>
-            </ul>
-          </section>
-
-          <section className="rounded-2xl border border-bark p-4 shadow-sm">
-            <h2 className="font-semibold mb-2">Ostatnie wydatki</h2>
-            <ul className="text-sm flex flex-col gap-1">
-              <li>food — 142 zl (Anna)</li>
-              <li>gas — 200 zl (Jan)</li>
-            </ul>
-          </section>
-
-          {/* <section className="rounded-2xl border border-bark p-4 shadow-sm">
-            <h2 className="font-semibold mb-2">Chat</h2>
-            <p className="text-sm">Mama:hi</p>
-            <button type="button" className="text-xs border border-bark rounded px-2 py-1 mt-2">
-              Chat
-            </button>
-          </section> */}
-        </div>
-      </main>
-    </div>
+        <section className="rounded-2xl border border-bark p-4 shadow-sm">
+          <h2 className="font-semibold mb-2">Random photo</h2>
+          {randomPhotoUrl ? (
+            <img
+              src={randomPhotoUrl}
+              alt={randomPhoto.originalName}
+              className="w-full h-40 object-cover rounded"
+            />
+          ) : (
+            <p className="text-sm">No photos yet</p>
+          )}
+        </section>
+      </div>
+    </main>
   );
 }

@@ -43,6 +43,11 @@ export async function GET(
     include: { sender: { include: { personNode: true } } },
   });
 
+  await prisma.conversationParticipant.update({
+    where: { conversationId_memberId: { conversationId, memberId: member.id } },
+    data: { lastReadAt: new Date() },
+  });
+  console.log(`###### lastReadAt for member ${member.id} in conversation ${conversationId}`);
   return NextResponse.json({
     messages: messages.map((message) => ({
       id: message.id,
