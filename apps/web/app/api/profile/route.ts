@@ -18,7 +18,7 @@ export async function PATCH(request: Request) {
     return NextResponse.json({ error: "Invalid profile data" }, { status: 400 });
   }
 
-  const { firstName, lastName, birthDate } = parsed.data;
+  const { firstName, lastName, birthDate, avatarBase64 } = parsed.data;
 
   await prisma.personNode.upsert({
     where: { userId: session.user.id },
@@ -26,6 +26,7 @@ export async function PATCH(request: Request) {
       firstName,
       lastName,
       birthDate: birthDate ? new Date(birthDate) : null,
+      avatarBase64,
     },
     create: {
       firstName,
@@ -33,6 +34,7 @@ export async function PATCH(request: Request) {
       birthDate: birthDate ? new Date(birthDate) : null,
       userId: session.user.id,
       createdById: session.user.id,
+      avatarBase64,
     },
   });
 

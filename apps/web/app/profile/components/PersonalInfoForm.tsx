@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { signOut } from "next-auth/react";
 import { useForm } from "react-hook-form";
@@ -24,7 +24,8 @@ export function PersonalInfoForm({
   avatarBase64,
 }: PersonalInfoFormProps) {
 
-  const [avatar] = useState<string | null>(avatarBase64);
+  const [avatar, setAvatar] = useState<string | null>(avatarBase64);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const initials = `${firstName[0] ?? ""}${lastName[0] ?? ""}`.toUpperCase();
 
   const router = useRouter();
@@ -44,7 +45,7 @@ export function PersonalInfoForm({
     const response = await fetch("/api/profile", {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(data),
+      body: JSON.stringify({ ...data, avatarBase64: avatar }),
     });
 
     if (!response.ok) {
@@ -53,6 +54,17 @@ export function PersonalInfoForm({
     }
 
     router.refresh();
+  }
+
+  function onAvatarSelected(event: React.ChangeEvent<HTMLInputElement>) {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = () => {
+      setAvatar(reader.result as string);
+    };
+    reader.readAsDataURL(file);
   }
 
   const [showPasswordForm, setShowPasswordForm] = useState(false);
@@ -104,9 +116,17 @@ export function PersonalInfoForm({
             <button
               type="button"
               className="text-xs font-semibold mt-2"
+              onClick={() => fileInputRef.current?.click()}
             >
               Upload new image
             </button>
+            <input
+              type="file"
+              accept="image/png, image/jpeg"
+              ref={fileInputRef}
+              onChange={onAvatarSelected}
+              className="hidden"
+            />
           </div>
         </div>
 
