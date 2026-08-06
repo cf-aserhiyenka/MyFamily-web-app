@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -18,8 +18,10 @@ type FamilyInfoSectionProps = {
 
 export function FamilyInfoSection({ familyId, family, canManageFamily }: FamilyInfoSectionProps) {
   const router = useRouter();
+  const [avatar, setAvatar] = useState<string | null>(family.avatarBase64);
   const [saveError, setSaveError] = useState("");
   const initials = family.name.slice(0, 2).toUpperCase();
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
 
   const {
     register,
@@ -36,7 +38,7 @@ export function FamilyInfoSection({ familyId, family, canManageFamily }: FamilyI
     const response = await fetch(`/api/family/${familyId}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(data),
+      body: JSON.stringify({ ...data, avatarBase64: avatar }),
     });
 
     if (!response.ok) {
@@ -48,6 +50,17 @@ export function FamilyInfoSection({ familyId, family, canManageFamily }: FamilyI
     router.refresh();
   }
 
+  function onAvatarSelected(event: React.ChangeEvent<HTMLInputElement>) {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = () => {
+      setAvatar(reader.result as string);
+    };
+    reader.readAsDataURL(file);
+  }
+
   return (
     <section className="rounded-2xl border border-bark p-6 shadow-sm flex flex-col gap-4">
       <div>
@@ -57,17 +70,28 @@ export function FamilyInfoSection({ familyId, family, canManageFamily }: FamilyI
 
       <div className="flex items-center gap-4">
         <div className="w-16 h-16 rounded-full bg-bark border-2 border-cream shadow-md overflow-hidden flex items-center justify-center">
-          {family.avatarBase64 ? (
-            <img src={family.avatarBase64} alt="Family avatar" className="w-full h-full object-cover" />
+          {avatar ? (
+            <img src={avatar} alt="Family avatar" className="w-full h-full object-cover" />
           ) : (
             <span className="text-lg font-bold text-cream">{initials}</span>
           )}
         </div>
         {canManageFamily && (
-          <button type="button" className="text-xs font-semibold">
-            Upload new image
+          <button
+           type="button"
+           className="text-xs font-semibold"
+           onClick={() => fileInputRef.current?.click()}
+           >
+            Upload image
           </button>
         )}
+        <input
+          type="file"
+          accept="image/png, image/jpeg"
+          ref={fileInputRef}
+          onChange={onAvatarSelected}
+          className="hidden"
+        />
       </div>
 
       <form className="flex flex-col gap-3" onSubmit={handleSubmit(onSubmit)}>

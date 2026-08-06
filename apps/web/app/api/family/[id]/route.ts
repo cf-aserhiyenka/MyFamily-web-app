@@ -39,6 +39,7 @@ export async function PATCH(
     data: {
       name: parsed.data.name,
       description: parsed.data.description || null,
+      avatarBase64: parsed.data.avatarBase64,
     },
   });
 
