@@ -1,14 +1,13 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { registerSchema, type RegisterInput } from "@myfamily/shared";
 
 export default function RegisterPage() {
-  const router = useRouter();
   const [serverError, setServerError] = useState("");
+  const [registered, setRegistered] = useState(false);
 
   const {
     register,
@@ -33,7 +32,16 @@ export default function RegisterPage() {
       return;
     }
 
-    router.push("/login");
+    setRegistered(true);
+  }
+
+  if (registered) {
+    return (
+      <main className="flex min-h-screen flex-col items-center justify-center gap-4">
+        <h1 className="text-4xl">Check your email</h1>
+        <p>We sent a confirmation link to your email address.</p>
+      </main>
+    );
   }
 
   return (
