@@ -23,21 +23,18 @@ export function Sidebar({ familyId, familyName }: { familyId: string; familyName
           Gallery
         </Link>
 
-        <Link href={`/family/${familyId}/calendar`}>
-          Calendar
-        </Link>
-
         <Link href={`/family/${familyId}/chat`}>
           Chat
-        </Link>
-
-        <Link href={`/family/${familyId}/tasks`}>
-          Tasks
         </Link>
 
         <Link href={`/family/${familyId}/finance`}>
           Finance
         </Link>
+
+        <Link href={`/family/${familyId}/tasks`}>
+          Tasks
+        </Link>
+        
         <Link href={`/family/${familyId}/settings`}>
           Settings
         </Link>
