@@ -53,6 +53,7 @@ export async function GET(
       id: message.id,
       content: message.content,
       sentAt: message.sentAt,
+      editedAt: message.editedAt,
       senderId: message.senderId,
       senderName: `${message.sender.personNode.firstName} ${message.sender.personNode.lastName}`,
     })),
