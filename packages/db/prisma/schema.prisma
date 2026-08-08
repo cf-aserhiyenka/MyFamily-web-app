@@ -235,6 +235,7 @@ model Message {
   id        String    @id @default(uuid())
   content   String
   sentAt    DateTime  @default(now())
+  editedAt  DateTime?
   isDeleted Boolean   @default(false)
   deletedAt DateTime?
 

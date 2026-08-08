@@ -9,6 +9,7 @@ export type MessageRow = {
   id: string;
   content: string;
   sentAt: string;
+  editedAt: string | null;
   senderId: string;
   senderName: string;
 };
