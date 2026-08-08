@@ -80,6 +80,34 @@ export function ChatClient({ familyId, conversations, members,memberId }: ChatCl
     },
   });
 
+  const editMessage = useMutation({
+    mutationFn: async ({ messageId, content: newContent }: { messageId: string; content: string }) => {
+      const res = await fetch(`/api/conversations/${selectedId}/messages/${messageId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ content: newContent }),
+      });
+      if (!res.ok) throw new Error("Failed to edit message");
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["messages", selectedId] });
+    },
+  });
+
+  const deleteMessage = useMutation({
+    mutationFn: async (messageId: string) => {
+      const res = await fetch(`/api/conversations/${selectedId}/messages/${messageId}`, {
+        method: "DELETE",
+      });
+      if (!res.ok) throw new Error("Failed to delete message");
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["messages", selectedId] });
+    },
+  });
+
   const leaveGroup = useMutation({
     mutationFn: async (conversationId: string) => {
       const res = await fetch(`/api/conversations/${conversationId}`, {
@@ -114,6 +142,8 @@ export function ChatClient({ familyId, conversations, members,memberId }: ChatCl
         content={content}
         onContentChange={setContent}
         onSend={() => sendMessage.mutate()}
+        onEditMessage={(messageId, newContent) => editMessage.mutate({ messageId, content: newContent })}
+        onDeleteMessage={(messageId) => deleteMessage.mutate(messageId)}
         memberId={memberId}
 
       />
