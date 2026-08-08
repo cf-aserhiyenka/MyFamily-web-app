@@ -72,12 +72,19 @@ export function UploadTile({ familyId, albumId, onUploaded }: UploadTileProps) {
 
   return (
     <div className="flex flex-col gap-2">
+      <button
+        type="button"
+        className="bg-bark text-cream px-3 py-1 rounded-lg text-sm"
+        onClick={() => inputRef.current?.click()}
+      >
+        Upload
+      </button>
       <input
         ref={inputRef}
         type="file"
         accept={ALLOWED_TYPES.join(",")}
         onChange={handleChange}
-        className="text-sm"
+        className="hidden"
       />
       {upload.isPending && <p className="text-xs">Uploading...</p>}
       {error && <p className="text-xs text-red-600">{error}</p>}
