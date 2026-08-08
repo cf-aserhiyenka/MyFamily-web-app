@@ -4,6 +4,35 @@ import { authOptions } from "@/lib/auth";
 import { prisma } from "@myfamily/db";
 import { sendMessageSchema } from "@myfamily/shared";
 
+async function getOwnLastMessage(userId: string, conversationId: string, messageId: string) {
+  const conversation = await prisma.conversation.findUnique({ where: { id: conversationId } });
+  if (!conversation) {
+    return { error: "Conversation not found", status: 404 } as const;
+  }
+
+  const message = await prisma.message.findUnique({ where: { id: messageId } });
+  if (!message || message.conversationId !== conversationId || message.isDeleted) {
+    return { error: "Message not found", status: 404 } as const;
+  }
+
+  const member = await prisma.familyMember.findUnique({
+    where: { userId_familyId: { userId, familyId: conversation.familyId } },
+  });
+  if (!member || member.id !== message.senderId) {
+    return { error: "Not allowed to modify this message", status: 403 } as const;
+  }
+
+  const lastMessage = await prisma.message.findFirst({
+    where: { conversationId, isDeleted: false },
+    orderBy: { sentAt: "desc" },
+  });
+  if (lastMessage?.id !== messageId) {
+    return { error: "Only the last message can be modified", status: 403 } as const;
+  }
+
+  return { message } as const;
+}
+
 export async function PATCH(
   request: Request,
   { params }: { params: Promise<{ id: string; messageId: string }> }
@@ -21,29 +50,9 @@ export async function PATCH(
     return NextResponse.json({ error: "Invalid message" }, { status: 400 });
   }
 
-  const conversation = await prisma.conversation.findUnique({ where: { id: conversationId } });
-  if (!conversation) {
-    return NextResponse.json({ error: "Conversation not found" }, { status: 404 });
-  }
-
-  const message = await prisma.message.findUnique({ where: { id: messageId } });
-  if (!message || message.conversationId !== conversationId || message.isDeleted) {
-    return NextResponse.json({ error: "Message not found" }, { status: 404 });
-  }
-
-  const member = await prisma.familyMember.findUnique({
-    where: { userId_familyId: { userId: session.user.id, familyId: conversation.familyId } },
-  });
-  if (!member || member.id !== message.senderId) {
-    return NextResponse.json({ error: "Not allowed to edit this message" }, { status: 403 });
-  }
-
-  const lastMessage = await prisma.message.findFirst({
-    where: { conversationId, isDeleted: false },
-    orderBy: { sentAt: "desc" },
-  });
-  if (lastMessage?.id !== messageId) {
-    return NextResponse.json({ error: "Only the last message can be edited" }, { status: 403 });
+  const result = await getOwnLastMessage(session.user.id, conversationId, messageId);
+  if ("error" in result) {
+    return NextResponse.json({ error: result.error }, { status: result.status });
   }
 
   const updated = await prisma.message.update({
@@ -65,21 +74,9 @@ export async function DELETE(
 
   const { id: conversationId, messageId } = await params;
 
-  const conversation = await prisma.conversation.findUnique({ where: { id: conversationId } });
-  if (!conversation) {
-    return NextResponse.json({ error: "Conversation not found" }, { status: 404 });
-  }
-
-  const message = await prisma.message.findUnique({ where: { id: messageId } });
-  if (!message || message.conversationId !== conversationId || message.isDeleted) {
-    return NextResponse.json({ error: "Message not found" }, { status: 404 });
-  }
-
-  const member = await prisma.familyMember.findUnique({
-    where: { userId_familyId: { userId: session.user.id, familyId: conversation.familyId } },
-  });
-  if (!member || member.id !== message.senderId) {
-    return NextResponse.json({ error: "Not allowed to delete this message" }, { status: 403 });
+  const result = await getOwnLastMessage(session.user.id, conversationId, messageId);
+  if ("error" in result) {
+    return NextResponse.json({ error: result.error }, { status: result.status });
   }
 
   await prisma.message.update({

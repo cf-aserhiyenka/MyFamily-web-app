@@ -90,22 +90,22 @@ export function ConversationPanel({
                     {message.editedAt && <span className="text-xs"> (edited)</span>}
                   </p>
                   {isOwn && isLast && (
-                    <button
-                      type="button"
-                      onClick={() => startEditing(message)}
-                      className="text-xs border border-bark px-1.5 py-1 rounded-lg"
-                    >
-                      Edit
-                    </button>
-                  )}
-                  {isOwn && (
-                    <button
-                      type="button"
-                      onClick={() => onDeleteMessage(message.id)}
-                      className="text-xs border border-bark px-1.5 py-1 rounded-lg"
-                    >
-                      Delete
-                    </button>
+                    <>
+                      <button
+                        type="button"
+                        onClick={() => startEditing(message)}
+                        className="text-xs border border-bark px-1.5 py-1 rounded-lg"
+                      >
+                        Edit
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => onDeleteMessage(message.id)}
+                        className="text-xs border border-bark px-1.5 py-1 rounded-lg"
+                      >
+                        Delete
+                      </button>
+                    </>
                   )}
                 </div>
               )}
