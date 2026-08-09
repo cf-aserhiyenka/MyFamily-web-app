@@ -44,7 +44,7 @@ export function ArchiveClient({
   }
 
   return (
-    <main className="h-screen flex overflow-hidden">
+    <div className="h-screen flex overflow-hidden">
       <aside className="w-64 border-r border-bark p-4 flex flex-col gap-2 shrink-0 overflow-y-auto">
         <h2 className="text-lg font-semibold mb-2">Albums</h2>
         <AlbumList
@@ -79,6 +79,6 @@ export function ArchiveClient({
           />
         </div>
       </section>
-    </main>
+    </div>
   );
 }
