@@ -1,3 +1,6 @@
+"use client";
+
+import { useState } from "react";
 import { SummaryBar } from "./components/SummaryBar";
 import { BudgetsSection } from "./components/BudgetsSection";
 import { SavingGoalsSection } from "./components/SavingGoalsSection";
@@ -15,6 +18,14 @@ type FinanceClientProps = {
   transactions: TransactionRow[];
 };
 
+const TABS = [
+  { key: "budgets", label: "Budgets" },
+  { key: "goals", label: "Goals" },
+  { key: "payments", label: "Payments" },
+] as const;
+
+type TabKey = (typeof TABS)[number]["key"];
+
 export function FinanceClient({
   familyId,
   monthTotal,
@@ -23,14 +34,32 @@ export function FinanceClient({
   savingGoals,
   transactions,
 }: FinanceClientProps) {
+  const [activeTab, setActiveTab] = useState<TabKey>("budgets");
+
   return (
     <div className="p-4 md:p-8 flex flex-col gap-6">
       <SummaryBar monthTotal={monthTotal} savingsTotal={savingsTotal} />
-      <BudgetsSection familyId={familyId} budgets={budgets} />
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <SavingGoalsSection familyId={familyId} goals={savingGoals} />
+
+      <nav className="flex gap-2 border-b border-bark">
+        {TABS.map((tab) => (
+          <button
+            key={tab.key}
+            type="button"
+            onClick={() => setActiveTab(tab.key)}
+            className={`px-4 py-2 text-sm font-semibold border-b-2 -mb-px ${
+              activeTab === tab.key ? "border-bark" : "border-transparent text-bark/50"
+            }`}
+          >
+            {tab.label}
+          </button>
+        ))}
+      </nav>
+
+      {activeTab === "budgets" && <BudgetsSection familyId={familyId} budgets={budgets} />}
+      {activeTab === "goals" && <SavingGoalsSection familyId={familyId} goals={savingGoals} />}
+      {activeTab === "payments" && (
         <TransactionsSection familyId={familyId} budgets={budgets} transactions={transactions} />
-      </div>
+      )}
     </div>
   );
 }
