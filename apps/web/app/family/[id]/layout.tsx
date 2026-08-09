@@ -23,9 +23,9 @@ export default async function FamilyLayout({
   }
 
     return(
-        <div  className="flex min-h-screen">
+        <div  className="flex h-screen overflow-hidden">
             <Sidebar familyId={familyId} familyName={family?.name ?? ""} />
-            <main className="flex-1">
+            <main className="flex-1 overflow-y-auto">
                 {children}
             </main>
         </div>

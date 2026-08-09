@@ -9,7 +9,7 @@ type MembersSidebarProps = {
 
 export function MembersSidebar({ members, onStartConversation }: MembersSidebarProps) {
   return (
-    <aside className="w-64 border-l border-bark p-4 flex flex-col gap-2 shrink-0">
+    <aside className="w-64 border-l border-bark p-4 flex flex-col gap-2 shrink-0 overflow-y-auto">
       <h2 className="text-lg font-semibold mb-2">Chats</h2>
       {members.map((member) => (
         <button

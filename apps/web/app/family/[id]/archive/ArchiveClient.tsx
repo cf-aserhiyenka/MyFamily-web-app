@@ -44,8 +44,8 @@ export function ArchiveClient({
   }
 
   return (
-    <main className="min-h-screen flex">
-      <aside className="w-64 border-r border-bark p-4 flex flex-col gap-2 shrink-0">
+    <div className="h-screen flex overflow-hidden">
+      <aside className="w-64 border-r border-bark p-4 flex flex-col gap-2 shrink-0 overflow-y-auto">
         <h2 className="text-lg font-semibold mb-2">Albums</h2>
         <AlbumList
           familyId={familyId}
@@ -56,24 +56,29 @@ export function ArchiveClient({
         />
       </aside>
 
-      <section className="flex-1 p-4 flex flex-col gap-4">
-        <UploadTile
-          familyId={familyId}
-          albumId={selectedAlbumId}
-          onUploaded={() => {
-            refreshMedia();
-            refreshAlbums();
-          }}
-        />
-        <MediaGrid
-          familyId={familyId}
-          files={data?.files ?? []}
-          onChanged={() => {
-            refreshMedia();
-            refreshAlbums();
-          }}
-        />
+      <section className="flex-1 flex flex-col overflow-hidden">
+        <div className="p-4 pb-2 shrink-0">
+          <UploadTile
+            familyId={familyId}
+            albumId={selectedAlbumId}
+            onUploaded={() => {
+              refreshMedia();
+              refreshAlbums();
+            }}
+          />
+        </div>
+
+        <div className="flex-1 overflow-y-auto px-4 pb-4">
+          <MediaGrid
+            familyId={familyId}
+            files={data?.files ?? []}
+            onChanged={() => {
+              refreshMedia();
+              refreshAlbums();
+            }}
+          />
+        </div>
       </section>
-    </main>
+    </div>
   );
 }
