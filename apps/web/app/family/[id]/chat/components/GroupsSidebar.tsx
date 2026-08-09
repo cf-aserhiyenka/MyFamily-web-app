@@ -54,7 +54,7 @@ export function GroupsSidebar({
   }
 
   return (
-    <aside className="w-64 border-r border-bark p-4 flex flex-col gap-2 shrink-0">
+    <aside className="w-64 border-r border-bark p-4 flex flex-col gap-2 shrink-0 overflow-y-auto">
       <div className="flex items-center justify-between mb-2">
         <h2 className="text-lg font-semibold">Group chats</h2>
         <button
