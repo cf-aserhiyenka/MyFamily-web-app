@@ -38,7 +38,12 @@ export function TransactionsSection({
       <div className="rounded-2xl border border-bark p-4 shadow-sm">
         {transactions.length === 0 && <p className="text-sm">No transactions yet.</p>}
         {transactions.map((transaction) => (
-          <TransactionItem key={transaction.id} transaction={transaction} />
+          <TransactionItem
+            key={transaction.id}
+            familyId={familyId}
+            budgets={budgets}
+            transaction={transaction}
+          />
         ))}
       </div>
     </section>
