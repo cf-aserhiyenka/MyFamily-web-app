@@ -20,7 +20,6 @@ export default async function FinancePage({ params }: { params: Promise<{ id: st
     notFound();
   }
 
-  // Finance module is restricted to PARENT/GUARDIAN, per TODO/diamrams/4_module_finanse_rodzinne.txt
   if (member.role !== FamilyRole.PARENT && member.role !== FamilyRole.GUARDIAN) {
     notFound();
   }
@@ -59,8 +58,6 @@ export default async function FinancePage({ params }: { params: Promise<{ id: st
     }),
   ]);
 
-  // Prisma's Decimal type isn't serializable across the server/client boundary,
-  // so every amount is converted to a plain number before it's passed as a prop.
   return (
     <FinanceClient
       familyId={familyId}
@@ -79,6 +76,8 @@ export default async function FinancePage({ params }: { params: Promise<{ id: st
         name: goal.name,
         targetAmount: goal.targetAmount.toNumber(),
         currentAmount: goal.contributions.reduce((sum, c) => sum + c.amount.toNumber(), 0),
+        deadline: goal.deadline ? goal.deadline.toISOString() : null,
+        isAchieved: goal.isAchieved,
       }))}
       transactions={recentExpenses.map((expense) => ({
         id: expense.id,

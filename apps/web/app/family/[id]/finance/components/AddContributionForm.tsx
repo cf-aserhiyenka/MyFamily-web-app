@@ -35,7 +35,7 @@ export function AddContributionForm({ goalId }: { goalId: string }) {
         onClick={() => setOpen(true)}
         className="text-xs border border-bark rounded px-2 py-1 self-start"
       >
-        + Add funds
+        Add funds
       </button>
     );
   }

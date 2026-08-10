@@ -10,6 +10,12 @@ export const createExpenseSchema = z.object({
 
 export type CreateExpenseInput = z.infer<typeof createExpenseSchema>;
 
+export const updateExpenseSchema = createExpenseSchema.partial().extend({
+  budgetId: z.string().nullable().optional(),
+});
+
+export type UpdateExpenseInput = z.infer<typeof updateExpenseSchema>;
+
 export const createBudgetSchema = z.object({
   name: z.string().trim().min(1, "Name is required"),
   category: z.enum([
@@ -27,6 +33,10 @@ export const createBudgetSchema = z.object({
 
 export type CreateBudgetInput = z.infer<typeof createBudgetSchema>;
 
+export const updateBudgetSchema = createBudgetSchema.partial();
+
+export type UpdateBudgetInput = z.infer<typeof updateBudgetSchema>;
+
 export const createSavingGoalSchema = z.object({
   name: z.string().trim().min(1, "Name is required"),
   targetAmount: z.number().positive("Target must be positive"),
@@ -34,6 +44,13 @@ export const createSavingGoalSchema = z.object({
 });
 
 export type CreateSavingGoalInput = z.infer<typeof createSavingGoalSchema>;
+
+export const updateSavingGoalSchema = createSavingGoalSchema.partial().extend({
+  deadline: z.coerce.date().nullable().optional(),
+  isAchieved: z.boolean().optional(),
+});
+
+export type UpdateSavingGoalInput = z.infer<typeof updateSavingGoalSchema>;
 
 export const createContributionSchema = z.object({
   amount: z.number().positive("Amount must be positive"),
