@@ -48,6 +48,7 @@ export function AddBudgetTile({ familyId }: { familyId: string }) {
       className="rounded-2xl border border-bark p-4 shadow-sm flex flex-col gap-2"
       onSubmit={(e) => {
         e.preventDefault();
+        if (addBudget.isPending) return;
         addBudget.mutate();
       }}
     >
@@ -90,8 +91,12 @@ export function AddBudgetTile({ familyId }: { familyId: string }) {
         ))}
       </select>
       <div className="flex gap-2">
-        <button type="submit" className="bg-bark text-cream px-3 py-1 rounded-lg text-sm">
-          Save
+        <button
+          type="submit"
+          disabled={addBudget.isPending}
+          className="bg-bark text-cream px-3 py-1 rounded-lg text-sm disabled:opacity-50"
+        >
+          {addBudget.isPending ? "Saving..." : "Save"}
         </button>
         <button
           type="button"
