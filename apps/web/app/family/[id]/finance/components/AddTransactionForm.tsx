@@ -48,6 +48,7 @@ export function AddTransactionForm({
       className="rounded-2xl border border-bark p-4 shadow-sm flex flex-col gap-2 mb-4"
       onSubmit={(e) => {
         e.preventDefault();
+        if (addExpense.isPending) return;
         if (title.trim() && Number(amount) > 0) addExpense.mutate();
       }}
     >
@@ -93,8 +94,12 @@ export function AddTransactionForm({
         className="border border-bark rounded-lg px-2 py-1 text-sm"
       />
       <div className="flex gap-2">
-        <button type="submit" className="bg-bark text-cream px-3 py-1 rounded-lg text-sm">
-          Save
+        <button
+          type="submit"
+          disabled={addExpense.isPending}
+          className="bg-bark text-cream px-3 py-1 rounded-lg text-sm disabled:opacity-50"
+        >
+          {addExpense.isPending ? "Saving..." : "Save"}
         </button>
         <button
           type="button"

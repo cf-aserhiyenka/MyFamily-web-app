@@ -94,6 +94,7 @@ export function AlbumList({
           className="flex flex-col gap-2 border border-bark rounded-lg p-2"
           onSubmit={(e) => {
             e.preventDefault();
+            if (createAlbum.isPending) return;
             createAlbum.mutate();
           }}
         >
@@ -105,8 +106,12 @@ export function AlbumList({
             className="border border-bark rounded-lg px-2 py-1 text-sm"
           />
           <div className="flex gap-2">
-            <button type="submit" className="bg-bark text-cream px-3 py-1 rounded-lg text-sm">
-              Save
+            <button
+              type="submit"
+              disabled={createAlbum.isPending}
+              className="bg-bark text-cream px-3 py-1 rounded-lg text-sm disabled:opacity-50"
+            >
+              {createAlbum.isPending ? "Saving..." : "Save"}
             </button>
             <button
               type="button"
