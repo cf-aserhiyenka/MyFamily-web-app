@@ -62,6 +62,7 @@ export function SavingGoalCard({ familyId, goal }: { familyId: string; goal: Sav
         className="rounded-2xl border border-bark p-4 shadow-sm flex flex-col gap-2"
         onSubmit={(e) => {
           e.preventDefault();
+          if (updateGoal.isPending) return;
           updateGoal.mutate();
         }}
       >
@@ -97,8 +98,12 @@ export function SavingGoalCard({ familyId, goal }: { familyId: string; goal: Sav
         </label>
         {updateGoal.isError && <p className="text-xs text-red-600">Could not save changes.</p>}
         <div className="flex gap-2">
-          <button type="submit" className="bg-bark text-cream px-3 py-1 rounded-lg text-sm">
-            Save
+          <button
+            type="submit"
+            disabled={updateGoal.isPending}
+            className="bg-bark text-cream px-3 py-1 rounded-lg text-sm disabled:opacity-50"
+          >
+            {updateGoal.isPending ? "Saving..." : "Save"}
           </button>
           <button
             type="button"
@@ -133,12 +138,14 @@ export function SavingGoalCard({ familyId, goal }: { familyId: string; goal: Sav
         {goal.currentAmount === 0 && (
           <button
             type="button"
+            disabled={deleteGoal.isPending}
             onClick={() => {
+              if (deleteGoal.isPending) return;
               if (confirm(`Delete goal "${goal.name}"?`)) deleteGoal.mutate();
             }}
-            className="border border-bark rounded px-2 py-1"
+            className="border border-bark rounded px-2 py-1 disabled:opacity-50"
           >
-            Delete
+            {deleteGoal.isPending ? "Deleting..." : "Delete"}
           </button>
         )}
       </div>
