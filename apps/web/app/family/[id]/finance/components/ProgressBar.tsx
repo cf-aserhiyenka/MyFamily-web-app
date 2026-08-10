@@ -1,4 +1,5 @@
-export function ProgressBar({ pct }: { pct: number }) {
+export function ProgressBar({ value, max }: { value: number; max: number }) {
+  const pct = max > 0 ? (value / max) * 100 : 0;
   const filled = Math.min(Math.max(pct, 0), 100);
   const isOver = pct > 100;
 

@@ -13,7 +13,7 @@ export function SavingGoalsSection({
       <h2 className="text-lg font-semibold">Saving goals</h2>
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         {goals.map((goal) => (
-          <SavingGoalCard key={goal.id} goal={goal} />
+          <SavingGoalCard key={goal.id} familyId={familyId} goal={goal} />
         ))}
         <AddGoalTile familyId={familyId} />
       </div>
