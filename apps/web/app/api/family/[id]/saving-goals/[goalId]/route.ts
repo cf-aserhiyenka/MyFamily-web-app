@@ -73,8 +73,6 @@ export async function DELETE(
     return NextResponse.json({ error: "Saving goal not found" }, { status: 404 });
   }
 
-  // GoalContribution is an append-only audit ledger (see diagram note on SavingGoal) —
-  // a goal that already has contributions can't be deleted, only edited.
   if (goal._count.contributions > 0) {
     return NextResponse.json(
       { error: "Cannot delete a goal that already has contributions" },
