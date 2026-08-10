@@ -84,6 +84,8 @@ export default async function FinancePage({ params }: { params: Promise<{ id: st
         title: expense.title,
         amount: expense.amount.toNumber(),
         date: expense.date.toISOString(),
+        note: expense.note,
+        budgetId: expense.budgetId,
         payerName: `${expense.paidBy.personNode.firstName} ${expense.paidBy.personNode.lastName}`,
         budgetCategory: expense.budget?.category ?? null,
       }))}
