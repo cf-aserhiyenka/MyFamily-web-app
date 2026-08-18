@@ -64,6 +64,7 @@ Examples in [`apps/web/.env.example`](apps/web/.env.example) and
 pnpm dev
 pnpm build
 pnpm lint
+pnpm typecheck
 ```
 
 In `packages/db`:
