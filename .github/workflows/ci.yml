@@ -35,3 +35,11 @@ jobs:
       - run: pnpm --filter web typecheck
 
       - run: pnpm build
+
+  deploy:
+    needs: ci
+    if: github.ref == 'refs/heads/dev' && github.event_name == 'push'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Trigger Render deploy
+        run: curl -fsS -X POST "${{ secrets.RENDER_DEPLOY_HOOK }}"
