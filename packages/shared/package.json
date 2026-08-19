@@ -3,10 +3,14 @@
   "version": "0.1.0",
   "private": true,
   "main": "./index.ts",
+  "scripts": {
+    "test": "vitest run"
+  },
   "dependencies": {
     "zod": "^3.24.1"
   },
   "devDependencies": {
-    "typescript": "^5.7.0"
+    "typescript": "^5.7.0",
+    "vitest": "^4.1.11"
   }
 }
