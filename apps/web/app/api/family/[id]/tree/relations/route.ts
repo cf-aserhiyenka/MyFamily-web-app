@@ -57,7 +57,28 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
     return NextResponse.json({ error: "Both people must be in this family's tree" }, { status: 400 });
   }
 
+  const existingBetweenPair = await prisma.personRelation.findMany({
+    where: {
+      familyId,
+      OR: [
+        { personAId, personBId },
+        { personAId: personBId, personBId: personAId },
+      ],
+    },
+  });
+
+  if (existingBetweenPair.some((r) => r.relation !== relation)) {
+    return NextResponse.json({ error: "These people already have a conflicting relation" }, { status: 409 });
+  }
+
   if (relation === RelationType.PARENT_OF) {
+    const parentCount = await prisma.personRelation.count({
+      where: { familyId, relation: RelationType.PARENT_OF, personBId },
+    });
+    if (parentCount >= 2) {
+      return NextResponse.json({ error: "This person already has 2 parents" }, { status: 400 });
+    }
+
     const wouldCycle = await isAncestor(familyId, personBId, personAId);
     if (wouldCycle) {
       return NextResponse.json({ error: "This relation would create a cycle" }, { status: 400 });

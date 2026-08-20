@@ -43,17 +43,17 @@ function PersonCard({
       type="button"
       onClick={onClick}
       className={
-        "flex flex-col items-center gap-1 px-3 py-2 text-center w-28 rounded-xl " +
-        (isHighlighted ? "ring-2 ring-bark" : "")
+        "flex flex-col items-center gap-1 px-3 py-2 text-center w-28 h-28 rounded-xl transition-colors " +
+        (isHighlighted ? "ring-2 ring-bark bg-bark/10" : "")
       }
     >
-      <div className="w-12 h-12 rounded-full bg-bark text-cream flex items-center justify-center font-bold text-sm">
+      <div className="w-12 h-12 shrink-0 rounded-full bg-bark text-cream flex items-center justify-center font-bold text-sm">
         {initials(person.firstName, person.lastName)}
       </div>
-      <p className="text-sm font-semibold leading-tight">
+      <p className="text-sm font-semibold leading-tight truncate w-full">
         {person.firstName} {person.lastName} {isYou && "(you)"}
       </p>
-      {dates && <p className="text-xs opacity-60">{dates}</p>}
+      <p className="text-xs opacity-60 h-4">{dates ?? " "}</p>
     </button>
   );
 }
