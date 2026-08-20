@@ -9,3 +9,4 @@ export * from "./schemas/member";
 export * from "./schemas/message";
 export * from "./schemas/finance";
 export * from "./schemas/media";
+export * from "./schemas/tree";
