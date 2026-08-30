@@ -2,8 +2,8 @@
 
 import { useRef, useState } from "react";
 import { useMutation } from "@tanstack/react-query";
+import { MAX_UPLOAD_SIZE_BYTES } from "@myfamily/shared";
 
-const MAX_FILE_SIZE = 8 * 1024 * 1024;
 const ALLOWED_TYPES = ["image/jpeg", "image/png"];
 
 type UploadTileProps = {
@@ -62,7 +62,7 @@ export function UploadTile({ familyId, albumId, onUploaded }: UploadTileProps) {
       setError("Only JPEG and PNG is allowed");
       return;
     }
-    const bigFile = files.find((file) => file.size > MAX_FILE_SIZE);
+    const bigFile = files.find((file) => file.size > MAX_UPLOAD_SIZE_BYTES);
     if (bigFile) {
       setError("File is too large max 8MB");
       return;
