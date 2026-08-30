@@ -65,6 +65,17 @@ export function AlbumList({
 
   return (
     <div className="flex flex-col gap-2">
+      <button
+        type="button"
+        onClick={() => onSelect("all")}
+        className={
+          "text-left px-3 py-2 rounded-lg font-medium " +
+          (selectedAlbumId === "all" ? "bg-bark text-cream" : "")
+        }
+      >
+        All photos
+      </button>
+
       {albums.map((album) => (
         <div key={album.id} className="flex items-center gap-2">
           <button
@@ -80,7 +91,13 @@ export function AlbumList({
           {album.canDelete && (
             <button
               type="button"
-              onClick={() => deleteAlbum.mutate(album.id)}
+              onClick={() => {
+                const defaultAlbum = albums.find((a) => a.type === "DEFAULT");
+                const ok = confirm(
+                  `Delete album "${album.name}"? Photos inside will move to "${defaultAlbum?.name ?? "the default album"}", not be deleted.`
+                );
+                if (ok) deleteAlbum.mutate(album.id);
+              }}
               className="text-xs"
             >
               Delete

@@ -28,7 +28,8 @@ export function ArchiveClient({
   const { data } = useQuery({
     queryKey: ["media", familyId, selectedAlbumId],
     queryFn: async () => {
-      const res = await fetch(`/api/family/${familyId}/media?albumId=${selectedAlbumId}`);
+      const query = selectedAlbumId === "all" ? "" : `?albumId=${selectedAlbumId}`;
+      const res = await fetch(`/api/family/${familyId}/media${query}`);
       if (!res.ok) throw new Error("Failed to load files");
       return res.json() as Promise<{ files: MediaFileRow[] }>;
     },
@@ -57,16 +58,18 @@ export function ArchiveClient({
       </aside>
 
       <section className="flex-1 flex flex-col overflow-hidden">
-        <div className="p-4 pb-2 shrink-0">
-          <UploadTile
-            familyId={familyId}
-            albumId={selectedAlbumId}
-            onUploaded={() => {
-              refreshMedia();
-              refreshAlbums();
-            }}
-          />
-        </div>
+        {selectedAlbumId !== "all" && (
+          <div className="p-4 pb-2 shrink-0">
+            <UploadTile
+              familyId={familyId}
+              albumId={selectedAlbumId}
+              onUploaded={() => {
+                refreshMedia();
+                refreshAlbums();
+              }}
+            />
+          </div>
+        )}
 
         <div className="flex-1 overflow-y-auto px-4 pb-4">
           <MediaGrid
