@@ -39,6 +39,7 @@ export const authOptions: NextAuthOptions = {
         return {
           id: user.id,
           email: user.email,
+          updatedAt: user.updatedAt.getTime(),
         };
       },
     }),
@@ -47,11 +48,21 @@ export const authOptions: NextAuthOptions = {
     async jwt({ token, user }) {
       if (user) {
         token.id = user.id;
+        token.updatedAt = user.updatedAt;
+        return token;
       }
+
+      const dbUser = await prisma.user.findUnique({ where: { id: token.id } });
+      if (!dbUser || !dbUser.isActive || dbUser.updatedAt.getTime() !== token.updatedAt) {
+        token.revoked = true;
+      }
+
       return token;
     },
     async session({ session, token }) {
-      session.user.id = token.id;
+      if (!token.revoked) {
+        session.user.id = token.id;
+      }
       return session;
     },
   },
