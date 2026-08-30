@@ -91,6 +91,10 @@ export async function POST(
     return NextResponse.json({ error: "You are not a member of this family" }, { status: 403 });
   }
 
+  if (!parsed.data.storageKey.startsWith(`families/${familyId}/`)) {
+    return NextResponse.json({ error: "Storage key does not belong to this family" }, { status: 403 });
+  }
+
   const albumId = parsed.data.albumId ?? (await getOrCreateDefaultAlbumId(familyId));
 
   const album = await prisma.album.findUnique({ where: { id: albumId } });
