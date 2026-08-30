@@ -53,21 +53,29 @@ export function UploadTile({ familyId, albumId, onUploaded }: UploadTileProps) {
     },
   });
 
-  function handleChange(e: React.ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0];
-    if (!file) return;
+  async function handleChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const files = Array.from(e.target.files ?? []);
+    if (files.length === 0) return;
 
-    if (!ALLOWED_TYPES.includes(file.type)) {
+    const badFile = files.find((file) => !ALLOWED_TYPES.includes(file.type));
+    if (badFile) {
       setError("Only JPEG and PNG is allowed");
       return;
     }
-    if (file.size > MAX_FILE_SIZE) {
+    const bigFile = files.find((file) => file.size > MAX_FILE_SIZE);
+    if (bigFile) {
       setError("File is too large max 8MB");
       return;
     }
 
     setError(null);
-    upload.mutate(file);
+    try {
+      for (const file of files) {
+        await upload.mutateAsync(file);
+      }
+    } catch {
+      setError("Failed to upload one of the files");
+    }
   }
 
   return (
@@ -82,6 +90,7 @@ export function UploadTile({ familyId, albumId, onUploaded }: UploadTileProps) {
       <input
         ref={inputRef}
         type="file"
+        multiple
         accept={ALLOWED_TYPES.join(",")}
         onChange={handleChange}
         className="hidden"
