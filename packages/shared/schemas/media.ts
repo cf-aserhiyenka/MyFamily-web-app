@@ -1,5 +1,7 @@
 import { z } from "zod";
 
+export const MAX_UPLOAD_SIZE_BYTES = 8 * 1024 * 1024;
+
 export const requestUploadUrlSchema = z.object({
   filename: z.string().trim().min(1, "Filename is required"),
   contentType: z.enum(["image/jpeg", "image/png"]),

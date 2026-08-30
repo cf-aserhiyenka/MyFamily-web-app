@@ -13,10 +13,20 @@ export type MediaFileRow = {
 type MediaCardProps = {
   familyId: string;
   file: MediaFileRow;
+  selected: boolean;
+  onToggleSelect: () => void;
   onChanged: () => void;
+  onOpen: () => void;
 };
 
-export function MediaCard({ familyId, file, onChanged }: MediaCardProps) {
+export function MediaCard({
+  familyId,
+  file,
+  selected,
+  onToggleSelect,
+  onChanged,
+  onOpen,
+}: MediaCardProps) {
   const deleteFile = useMutation({
     mutationFn: async () => {
       const res = await fetch(`/api/family/${familyId}/media/${file.id}`, {
@@ -30,8 +40,15 @@ export function MediaCard({ familyId, file, onChanged }: MediaCardProps) {
 
   return (
     <div className="rounded-2xl border border-bark shadow-sm overflow-hidden flex flex-col">
-      <img src={file.url} alt={file.originalName} className="w-full h-40 object-cover" />
-      <div className="p-2 flex justify-end items-center text-xs">
+      <img
+        src={file.url}
+        alt={file.originalName}
+        loading="lazy"
+        className="w-full h-40 object-cover cursor-pointer"
+        onClick={onOpen}
+      />
+      <div className="p-2 flex justify-between items-center text-xs">
+        <input type="checkbox" checked={selected} onChange={onToggleSelect} />
         {file.canDelete && (
           <button type="button" onClick={() => deleteFile.mutate()}>
             Delete
