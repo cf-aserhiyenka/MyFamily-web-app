@@ -1,8 +1,9 @@
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
-import { prisma, MemberStatus, FamilyRole } from "@myfamily/db";
+import { prisma } from "@myfamily/db";
 import { createBudgetSchema } from "@myfamily/shared";
+import { getFamilyContext } from "@/lib/permissions";
 
 export async function POST(
   request: Request,
@@ -21,16 +22,14 @@ export async function POST(
     return NextResponse.json({ error: "Invalid budget data" }, { status: 400 });
   }
 
-  const membership = await prisma.familyMember.findUnique({
-    where: { userId_familyId: { userId: session.user.id, familyId } },
-  });
+  const context = await getFamilyContext(session.user.id, familyId);
 
-  if (!membership || membership.status !== MemberStatus.ACTIVE) {
+  if (!context?.isActiveMember || !context.membership) {
     return NextResponse.json({ error: "You are not a member of this family" }, { status: 403 });
   }
 
   // Finance module is restricted to PARENT/GUARDIAN, per TODO/diamrams/4_module_finanse_rodzinne.txt
-  if (membership.role !== FamilyRole.PARENT && membership.role !== FamilyRole.GUARDIAN) {
+  if (!context.permissions?.manageFinance) {
     return NextResponse.json({ error: "Not permitted" }, { status: 403 });
   }
 
@@ -43,7 +42,7 @@ export async function POST(
       currency: "PLN",
       isActive: true,
       familyId,
-      createdById: membership.id,
+      createdById: context.membership.id,
     },
   });
 

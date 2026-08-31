@@ -110,7 +110,7 @@ export function InvitationsSection({ familyId, invitations }: InvitationsSection
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-lg font-semibold">Invitations</h2>
-          <p className="text-xs">Invite new members and manage invitations that haven't been answered yet.</p>
+          <p className="text-xs">Invite new members and manage invitations that haven&apos;t been answered yet.</p>
         </div>
         <button
           type="button"

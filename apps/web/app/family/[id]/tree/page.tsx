@@ -1,7 +1,7 @@
 import { redirect, notFound } from "next/navigation";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
-import { getFamilyPermissions } from "@/lib/permissions";
+import { getFamilyContext } from "@/lib/permissions";
 import { getFamilyTreeData, buildGenerations } from "@/lib/tree";
 import { TreeClient } from "./TreeClient";
 
@@ -13,7 +13,7 @@ export default async function TreePage({ params }: { params: Promise<{ id: strin
     redirect("/login");
   }
 
-  const permissions = await getFamilyPermissions(session.user.id, familyId);
+  const permissions = await getFamilyContext(session.user.id, familyId);
 
   if (!permissions?.isActiveMember) {
     notFound();

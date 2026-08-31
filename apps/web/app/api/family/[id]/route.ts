@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
-import { getFamilyPermissions } from "@/lib/permissions";
+import { getFamilyContext } from "@/lib/permissions";
 import { prisma } from "@myfamily/db";
 import { updateFamilySchema } from "@myfamily/shared";
 
@@ -24,7 +24,7 @@ export async function PATCH(
     return NextResponse.json({ error: "Invalid family data" }, { status: 400 });
   }
 
-  const permissions = await getFamilyPermissions(session.user.id, familyId);
+  const permissions = await getFamilyContext(session.user.id, familyId);
 
   if (!permissions) {
     return NextResponse.json({ error: "Family not found" }, { status: 404 });
@@ -58,7 +58,7 @@ export async function DELETE(
 
   const { id: familyId } = await params;
 
-  const permissions = await getFamilyPermissions(session.user.id, familyId);
+  const permissions = await getFamilyContext(session.user.id, familyId);
 
   if (!permissions) {
     return NextResponse.json({ error: "Family not found" }, { status: 404 });

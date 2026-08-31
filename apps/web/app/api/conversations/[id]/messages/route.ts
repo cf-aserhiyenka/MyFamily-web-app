@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
-import { prisma } from "@myfamily/db";
+import { prisma, MemberStatus } from "@myfamily/db";
 import { sendMessageSchema } from "@myfamily/shared";
 
 async function getActiveParticipant(userId: string, conversationId: string) {
@@ -11,7 +11,7 @@ async function getActiveParticipant(userId: string, conversationId: string) {
   const member = await prisma.familyMember.findUnique({
     where: { userId_familyId: { userId, familyId: conversation.familyId } },
   });
-  if (!member) return null;
+  if (!member || member.status !== MemberStatus.ACTIVE) return null;
 
   const participant = await prisma.conversationParticipant.findUnique({
     where: { conversationId_memberId: { conversationId, memberId: member.id } },

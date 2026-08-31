@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { signIn } from "next-auth/react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -62,6 +63,10 @@ export default function LoginPage() {
         <button type="submit" disabled={isSubmitting}>
           {isSubmitting ? "Logging in..." : "Log in"}
         </button>
+
+        <Link href="/forgot-password" className="underline text-sm">
+          Forgot password?
+        </Link>
       </form>
     </main>
   );

@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
-import { getFamilyPermissions } from "@/lib/permissions";
+import { getFamilyContext } from "@/lib/permissions";
 import { prisma, MemberStatus } from "@myfamily/db";
 import { updateMemberRoleSchema } from "@myfamily/shared";
 
@@ -24,13 +24,13 @@ export async function PATCH(
     return NextResponse.json({ error: "Invalid role" }, { status: 400 });
   }
 
-  const permissions = await getFamilyPermissions(session.user.id, familyId);
+  const context = await getFamilyContext(session.user.id, familyId);
 
-  if (!permissions) {
+  if (!context) {
     return NextResponse.json({ error: "Family not found" }, { status: 404 });
   }
 
-  if (!permissions.canManageFamily) {
+  if (!context.canManageFamily) {
     return NextResponse.json({ error: "You cannot manage this family" }, { status: 403 });
   }
 
@@ -38,6 +38,13 @@ export async function PATCH(
 
   if (!member || member.familyId !== familyId) {
     return NextResponse.json({ error: "Member not found" }, { status: 404 });
+  }
+
+  if (member.userId === context.ownerId) {
+    return NextResponse.json(
+      { error: "The family owner's role cannot be changed." },
+      { status: 400 }
+    );
   }
 
   await prisma.familyMember.update({
@@ -60,20 +67,15 @@ export async function DELETE(
 
   const { id: familyId, memberId } = await params;
 
-  const permissions = await getFamilyPermissions(session.user.id, familyId);
+  const context = await getFamilyContext(session.user.id, familyId);
 
-  if (!permissions) {
+  if (!context) {
     return NextResponse.json({ error: "Family not found" }, { status: 404 });
   }
 
-  if (!permissions.canManageFamily) {
+  if (!context.canManageFamily) {
     return NextResponse.json({ error: "You cannot manage this family" }, { status: 403 });
   }
-
-  const family = await prisma.family.findUnique({
-    where: { id: familyId },
-    select: { createdById: true },
-  });
 
   const member = await prisma.familyMember.findUnique({ where: { id: memberId } });
 
@@ -81,7 +83,7 @@ export async function DELETE(
     return NextResponse.json({ error: "Member not found" }, { status: 404 });
   }
 
-  if (member.userId === family?.createdById) {
+  if (member.userId === context.ownerId) {
     return NextResponse.json(
       { error: "The family owner cannot be removed. Delete the family instead." },
       { status: 400 }

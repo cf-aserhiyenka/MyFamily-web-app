@@ -1,8 +1,9 @@
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
-import { prisma, MemberStatus } from "@myfamily/db";
+import { prisma } from "@myfamily/db";
 import { createPersonSchema } from "@myfamily/shared";
+import { getFamilyContext } from "@/lib/permissions";
 
 export async function POST(request: Request, { params }: { params: Promise<{ id: string }> }) {
   const session = await getServerSession(authOptions);
@@ -18,15 +19,21 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
     return NextResponse.json({ error: "Invalid person data" }, { status: 400 });
   }
 
-  const membership = await prisma.familyMember.findUnique({
-    where: { userId_familyId: { userId: session.user.id, familyId } },
-  });
+  const context = await getFamilyContext(session.user.id, familyId);
 
-  if (!membership || membership.status !== MemberStatus.ACTIVE) {
+  if (!context?.isActiveMember || !context.membership) {
     return NextResponse.json({ error: "You are not a member of this family" }, { status: 403 });
   }
 
+  if (!context.permissions?.manageTree) {
+    return NextResponse.json(
+      { error: "Only parents or guardians can manage the family tree" },
+      { status: 403 }
+    );
+  }
+
   const { firstName, lastName, birthDate, deathDate } = parsed.data;
+  const membership = context.membership;
 
   const person = await prisma.$transaction(async (tx) => {
     const created = await tx.personNode.create({
