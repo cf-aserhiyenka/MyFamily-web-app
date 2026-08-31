@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
+import bcrypt from "bcryptjs";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@myfamily/db";
 import { updateProfileSchema } from "@myfamily/shared";
@@ -60,9 +61,17 @@ export async function DELETE() {
     );
   }
 
+  const anonymizedPasswordHash = await bcrypt.hash(crypto.randomUUID(), 10);
+
   await prisma.user.update({
     where: { id: session.user.id },
-    data: { isActive: false },
+    data: {
+      isActive: false,
+      email: `deleted-${session.user.id}@anonymized.local`,
+      passwordHash: anonymizedPasswordHash,
+      resetToken: null,
+      resetTokenExpiresAt: null,
+    },
   });
 
   return NextResponse.json({ ok: true });
