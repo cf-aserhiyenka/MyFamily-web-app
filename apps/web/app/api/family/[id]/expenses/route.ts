@@ -33,6 +33,13 @@ export async function POST(
     return NextResponse.json({ error: "Not permitted" }, { status: 403 });
   }
 
+  if (parsed.data.budgetId) {
+    const budget = await prisma.budget.findUnique({ where: { id: parsed.data.budgetId } });
+    if (!budget || budget.familyId !== familyId) {
+      return NextResponse.json({ error: "Invalid budget" }, { status: 400 });
+    }
+  }
+
   const expense = await prisma.expense.create({
     data: {
       title: parsed.data.title,
