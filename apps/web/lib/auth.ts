@@ -23,7 +23,7 @@ export const authOptions: NextAuthOptions = {
           where: { email: credentials.email },
         });
 
-        if (!user || !user.isActive) {
+        if (!user || !user.isActive || !user.emailVerified) {
           return null;
         }
 

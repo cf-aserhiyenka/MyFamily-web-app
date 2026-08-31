@@ -16,6 +16,7 @@ async function main() {
     data: {
       email: "john@test.com",
       passwordHash,
+      emailVerified: new Date(),
     },
   });
 
@@ -23,6 +24,7 @@ async function main() {
     data: {
       email: "anna@test.com",
       passwordHash,
+      emailVerified: new Date(),
     },
   });
 
@@ -30,6 +32,7 @@ async function main() {
     data: {
       email: "peter@test.com",
       passwordHash,
+      emailVerified: new Date(),
     },
   });
 
@@ -37,6 +40,7 @@ async function main() {
     data: {
       email: "kate@test.com",
       passwordHash,
+      emailVerified: new Date(),
     },
   });
 
@@ -44,6 +48,7 @@ async function main() {
     data: {
       email: "adam@test.com",
       passwordHash,
+      emailVerified: new Date(),
     },
   });
 
