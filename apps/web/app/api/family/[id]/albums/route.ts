@@ -1,8 +1,9 @@
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
-import { prisma, MemberStatus, FamilyRole, AlbumType } from "@myfamily/db";
+import { prisma, AlbumType } from "@myfamily/db";
 import { createAlbumSchema } from "@myfamily/shared";
+import { getFamilyContext } from "@/lib/permissions";
 
 async function getOrCreateDefaultAlbum(familyId: string) {
   const existing = await prisma.album.findFirst({
@@ -33,11 +34,9 @@ export async function GET(
 
   const { id: familyId } = await params;
 
-  const membership = await prisma.familyMember.findUnique({
-    where: { userId_familyId: { userId: session.user.id, familyId } },
-  });
+  const context = await getFamilyContext(session.user.id, familyId);
 
-  if (!membership || membership.status !== MemberStatus.ACTIVE) {
+  if (!context?.isActiveMember || !context.membership) {
     return NextResponse.json({ error: "You are not a member of this family" }, { status: 403 });
   }
 
@@ -49,6 +48,8 @@ export async function GET(
     orderBy: { createdAt: "asc" },
   });
 
+  const membership = context.membership;
+
   const result = albums.map((album) => ({
     id: album.id,
     name: album.name,
@@ -57,9 +58,7 @@ export async function GET(
     fileCount: album._count.files,
     canDelete:
       album.type === AlbumType.CUSTOM &&
-      (album.createdById === membership.id ||
-        membership.role === FamilyRole.PARENT ||
-        membership.role === FamilyRole.GUARDIAN),
+      (album.createdById === membership.id || context.permissions?.manageArchive === true),
   }));
 
   return NextResponse.json({ albums: result }, { status: 200 });
@@ -82,11 +81,9 @@ export async function POST(
     return NextResponse.json({ error: "Invalid album data" }, { status: 400 });
   }
 
-  const membership = await prisma.familyMember.findUnique({
-    where: { userId_familyId: { userId: session.user.id, familyId } },
-  });
+  const context = await getFamilyContext(session.user.id, familyId);
 
-  if (!membership || membership.status !== MemberStatus.ACTIVE) {
+  if (!context?.isActiveMember || !context.membership) {
     return NextResponse.json({ error: "You are not a member of this family" }, { status: 403 });
   }
 
@@ -96,7 +93,7 @@ export async function POST(
       description: parsed.data.description,
       type: AlbumType.CUSTOM,
       familyId,
-      createdById: membership.id,
+      createdById: context.membership.id,
     },
   });
 

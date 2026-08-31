@@ -1,37 +1,50 @@
-import { prisma, MemberStatus, FamilyRole } from "@myfamily/db";
+import { prisma, MemberStatus, FamilyRole, type FamilyMember } from "@myfamily/db";
 
-export type FamilyPermissions = {
+//  RBAC.
+export const ROLE_PERMISSIONS: Record<
+  FamilyRole,
+  { manageFamily: boolean; manageFinance: boolean; manageTree: boolean; manageArchive: boolean; chat: boolean }
+> = {
+  PARENT: { manageFamily: true, manageFinance: true, manageTree: true, manageArchive: true, chat: true },
+  GUARDIAN: { manageFamily: true, manageFinance: true, manageTree: true, manageArchive: true, chat: true },
+  CHILD: { manageFamily: false, manageFinance: false, manageTree: false, manageArchive: false, chat: true },
+  SENIOR: { manageFamily: false, manageFinance: false, manageTree: false, manageArchive: false, chat: true },
+};
+
+export type FamilyContext = {
+  ownerId: string;
+  membership: FamilyMember | null;
   isOwner: boolean;
   isActiveMember: boolean;
+  permissions: (typeof ROLE_PERMISSIONS)[FamilyRole] | null;
   canManageFamily: boolean;
   canDeleteFamily: boolean;
 };
 
-export async function getFamilyPermissions(
+export async function getFamilyContext(
   userId: string,
   familyId: string
-): Promise<FamilyPermissions | null> {
-  const family = await prisma.family.findUnique({
-    where: { id: familyId },
-    select: { createdById: true },
-  });
+): Promise<FamilyContext | null> {
+  const [family, membership] = await Promise.all([
+    prisma.family.findUnique({ where: { id: familyId }, select: { createdById: true } }),
+    prisma.familyMember.findUnique({ where: { userId_familyId: { userId, familyId } } }),
+  ]);
 
   if (!family) {
     return null;
   }
 
-  const membership = await prisma.familyMember.findUnique({
-    where: { userId_familyId: { userId, familyId } },
-  });
-
   const isOwner = family.createdById === userId;
   const isActiveMember = membership?.status === MemberStatus.ACTIVE;
-  const canManageFamily = isActiveMember && (isOwner || membership?.role === FamilyRole.PARENT);
+  const permissions = membership ? ROLE_PERMISSIONS[membership.role] : null;
 
   return {
+    ownerId: family.createdById,
+    membership,
     isOwner,
     isActiveMember,
-    canManageFamily,
+    permissions,
+    canManageFamily: isActiveMember && (isOwner || permissions?.manageFamily === true),
     canDeleteFamily: isOwner,
   };
 }

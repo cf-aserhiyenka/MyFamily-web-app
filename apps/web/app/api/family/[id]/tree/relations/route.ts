@@ -1,8 +1,9 @@
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
-import { prisma, MemberStatus, RelationType } from "@myfamily/db";
+import { prisma, RelationType } from "@myfamily/db";
 import { createRelationSchema } from "@myfamily/shared";
+import { getFamilyContext } from "@/lib/permissions";
 
 async function isAncestor(familyId: string, candidateId: string, personId: string) {
   const parentRelations = await prisma.personRelation.findMany({
@@ -39,12 +40,17 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
     return NextResponse.json({ error: "Invalid relation data" }, { status: 400 });
   }
 
-  const membership = await prisma.familyMember.findUnique({
-    where: { userId_familyId: { userId: session.user.id, familyId } },
-  });
+  const context = await getFamilyContext(session.user.id, familyId);
 
-  if (!membership || membership.status !== MemberStatus.ACTIVE) {
+  if (!context?.isActiveMember || !context.membership) {
     return NextResponse.json({ error: "You are not a member of this family" }, { status: 403 });
+  }
+
+  if (!context.permissions?.manageTree) {
+    return NextResponse.json(
+      { error: "Only parents or guardians can manage the family tree" },
+      { status: 403 }
+    );
   }
 
   const { personAId, personBId, relation } = parsed.data;

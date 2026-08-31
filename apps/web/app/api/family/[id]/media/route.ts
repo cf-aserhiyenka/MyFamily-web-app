@@ -1,9 +1,10 @@
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
-import { prisma, MemberStatus, FamilyRole, MediaType } from "@myfamily/db";
+import { prisma, MediaType } from "@myfamily/db";
 import { createMediaFileSchema, MAX_UPLOAD_SIZE_BYTES } from "@myfamily/shared";
 import { getViewUrl, getObjectMetadata, deleteMediaObject } from "@/lib/s3";
+import { getFamilyContext } from "@/lib/permissions";
 
 const ALLOWED_MIME_TYPES = ["image/jpeg", "image/png"];
 
@@ -36,11 +37,9 @@ export async function GET(
   const { searchParams } = new URL(request.url);
   const albumId = searchParams.get("albumId") ?? undefined;
 
-  const membership = await prisma.familyMember.findUnique({
-    where: { userId_familyId: { userId: session.user.id, familyId } },
-  });
+  const context = await getFamilyContext(session.user.id, familyId);
 
-  if (!membership || membership.status !== MemberStatus.ACTIVE) {
+  if (!context?.isActiveMember || !context.membership) {
     return NextResponse.json({ error: "You are not a member of this family" }, { status: 403 });
   }
 
@@ -49,6 +48,8 @@ export async function GET(
     orderBy: { uploadedAt: "desc" },
   });
 
+  const membership = context.membership;
+
   const result = await Promise.all(
     files.map(async (file) => ({
       id: file.id,
@@ -56,10 +57,7 @@ export async function GET(
       originalName: file.originalName,
       url: await getViewUrl(file.storageKey),
       uploadedAt: file.uploadedAt,
-      canDelete:
-        file.uploadedById === membership.id ||
-        membership.role === FamilyRole.PARENT ||
-        membership.role === FamilyRole.GUARDIAN,
+      canDelete: file.uploadedById === membership.id || context.permissions?.manageArchive === true,
     }))
   );
 
@@ -83,11 +81,9 @@ export async function POST(
     return NextResponse.json({ error: "Invalid file data" }, { status: 400 });
   }
 
-  const membership = await prisma.familyMember.findUnique({
-    where: { userId_familyId: { userId: session.user.id, familyId } },
-  });
+  const context = await getFamilyContext(session.user.id, familyId);
 
-  if (!membership || membership.status !== MemberStatus.ACTIVE) {
+  if (!context?.isActiveMember || !context.membership) {
     return NextResponse.json({ error: "You are not a member of this family" }, { status: 403 });
   }
 
@@ -124,7 +120,7 @@ export async function POST(
       type: MediaType.IMAGE,
       familyId,
       albumId,
-      uploadedById: membership.id,
+      uploadedById: context.membership.id,
     },
   });
 

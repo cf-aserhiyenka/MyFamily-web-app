@@ -1,8 +1,9 @@
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
-import { prisma, MemberStatus, FamilyRole } from "@myfamily/db";
+import { prisma } from "@myfamily/db";
 import { createExpenseSchema } from "@myfamily/shared";
+import { getFamilyContext } from "@/lib/permissions";
 
 export async function POST(
   request: Request,
@@ -21,15 +22,13 @@ export async function POST(
     return NextResponse.json({ error: "Invalid expense data" }, { status: 400 });
   }
 
-  const membership = await prisma.familyMember.findUnique({
-    where: { userId_familyId: { userId: session.user.id, familyId } },
-  });
+  const context = await getFamilyContext(session.user.id, familyId);
 
-  if (!membership || membership.status !== MemberStatus.ACTIVE) {
+  if (!context?.isActiveMember || !context.membership) {
     return NextResponse.json({ error: "You are not a member of this family" }, { status: 403 });
   }
 
-  if (membership.role !== FamilyRole.PARENT && membership.role !== FamilyRole.GUARDIAN) {
+  if (!context.permissions?.manageFinance) {
     return NextResponse.json({ error: "Not permitted" }, { status: 403 });
   }
 
@@ -48,7 +47,7 @@ export async function POST(
       note: parsed.data.note,
       familyId,
       budgetId: parsed.data.budgetId ?? null,
-      paidById: membership.id,
+      paidById: context.membership.id,
     },
   });
 
