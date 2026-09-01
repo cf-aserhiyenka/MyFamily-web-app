@@ -29,23 +29,24 @@ export async function POST(request: Request) {
   }
 
   const passwordHash = await bcrypt.hash(password, 10);
-
-  const user = await prisma.user.create({
-    data: {
-      email,
-      passwordHash,
-    },
-  });
-
   const token = crypto.randomUUID();
 
-  await prisma.emailVerificationToken.create({
-    data: {
-      token,
-      email,
-      userId: user.id,
-      expiresAt: new Date(Date.now() + VERIFICATION_LIFETIME_HOURS * 60 * 60 * 1000),
-    },
+  await prisma.$transaction(async (t) => {
+    const user = await t.user.create({
+      data: {
+        email,
+        passwordHash,
+      },
+    });
+
+    await t.emailVerificationToken.create({
+      data: {
+        token,
+        email,
+        userId: user.id,
+        expiresAt: new Date(Date.now() + VERIFICATION_LIFETIME_HOURS * 60 * 60 * 1000),
+      },
+    });
   });
 
   await sendVerificationEmail(email, token);
