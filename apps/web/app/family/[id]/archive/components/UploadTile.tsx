@@ -2,7 +2,7 @@
 
 import { useRef, useState } from "react";
 import { useMutation } from "@tanstack/react-query";
-import { MAX_UPLOAD_SIZE_BYTES } from "@myfamily/shared";
+import { MAX_UPLOAD_SIZE_BYTES, requestUploadUrlSchema, createMediaFileSchema } from "@myfamily/shared";
 
 const ALLOWED_TYPES = ["image/jpeg", "image/png"];
 
@@ -18,10 +18,11 @@ export function UploadTile({ familyId, albumId, onUploaded }: UploadTileProps) {
 
   const upload = useMutation({
     mutationFn: async (file: File) => {
+      const uploadUrlPayload = requestUploadUrlSchema.parse({ filename: file.name, contentType: file.type, albumId });
       const uploadUrlRes = await fetch(`/api/family/${familyId}/media/upload-url`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ filename: file.name, contentType: file.type, albumId }),
+        body: JSON.stringify(uploadUrlPayload),
       });
       if (!uploadUrlRes.ok) throw new Error("Failed upload");
       const { uploadUrl, storageKey } = await uploadUrlRes.json();
@@ -33,16 +34,17 @@ export function UploadTile({ familyId, albumId, onUploaded }: UploadTileProps) {
       });
       if (!putRes.ok) throw new Error("Failed to upload file");
 
+      const confirmPayload = createMediaFileSchema.parse({
+        storageKey,
+        originalName: file.name,
+        mimeType: file.type,
+        sizeBytes: file.size,
+        albumId,
+      });
       const confirmRes = await fetch(`/api/family/${familyId}/media`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          storageKey,
-          originalName: file.name,
-          mimeType: file.type,
-          sizeBytes: file.size,
-          albumId,
-        }),
+        body: JSON.stringify(confirmPayload),
       });
       if (!confirmRes.ok) throw new Error("Failed to save file");
       return confirmRes.json();

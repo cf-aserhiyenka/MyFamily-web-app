@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useMutation } from "@tanstack/react-query";
+import { createContributionSchema } from "@myfamily/shared";
 
 export function AddContributionForm({ goalId }: { goalId: string }) {
   const router = useRouter();
@@ -12,10 +13,11 @@ export function AddContributionForm({ goalId }: { goalId: string }) {
 
   const addContribution = useMutation({
     mutationFn: async () => {
+      const payload = createContributionSchema.parse({ amount: Number(amount), note: note || undefined });
       const res = await fetch(`/api/saving-goals/${goalId}/contributions`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ amount: Number(amount), note: note || undefined }),
+        body: JSON.stringify(payload),
       });
       if (!res.ok) throw new Error("Failed to add contribution");
       return res.json();

@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useMutation } from "@tanstack/react-query";
+import { createSavingGoalSchema } from "@myfamily/shared";
 
 export function AddGoalTile({ familyId }: { familyId: string }) {
   const router = useRouter();
@@ -13,14 +14,15 @@ export function AddGoalTile({ familyId }: { familyId: string }) {
 
   const addGoal = useMutation({
     mutationFn: async () => {
+      const payload = createSavingGoalSchema.parse({
+        name,
+        targetAmount: Number(targetAmount),
+        deadline: deadline || undefined,
+      });
       const res = await fetch(`/api/family/${familyId}/saving-goals`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          name,
-          targetAmount: Number(targetAmount),
-          deadline: deadline || undefined,
-        }),
+        body: JSON.stringify(payload),
       });
       if (!res.ok) throw new Error("Failed to create saving goal");
       return res.json();
