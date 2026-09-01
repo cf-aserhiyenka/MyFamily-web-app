@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useMutation } from "@tanstack/react-query";
+import { createExpenseSchema } from "@myfamily/shared";
 import type { BudgetRow } from "./BudgetCard";
 
 export function AddTransactionForm({
@@ -23,16 +24,17 @@ export function AddTransactionForm({
 
   const addExpense = useMutation({
     mutationFn: async () => {
+      const payload = createExpenseSchema.parse({
+        title,
+        amount: Number(amount),
+        date,
+        note: note || undefined,
+        budgetId: budgetId || undefined,
+      });
       const res = await fetch(`/api/family/${familyId}/expenses`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          title,
-          amount: Number(amount),
-          date,
-          note: note || undefined,
-          budgetId: budgetId || undefined,
-        }),
+        body: JSON.stringify(payload),
       });
       if (!res.ok) throw new Error("Failed to create expense");
       return res.json();

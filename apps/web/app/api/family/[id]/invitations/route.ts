@@ -4,6 +4,7 @@ import { authOptions } from "@/lib/auth";
 import { getFamilyContext } from "@/lib/permissions";
 import { prisma } from "@myfamily/db";
 import { createInvitationSchema } from "@myfamily/shared";
+import { sendFamilyInvitationEmail } from "@/lib/email";
 
 const INVITATION_LIFETIME_DAYS = 7;
 
@@ -45,7 +46,10 @@ export async function POST(
       familyId,
       invitedById: context.membership.id,
     },
+    include: { family: { select: { name: true } } },
   });
+
+  await sendFamilyInvitationEmail(invitation.email, invitation.family.name);
 
   return NextResponse.json({ id: invitation.id }, { status: 201 });
 }

@@ -23,3 +23,14 @@ export async function sendPasswordResetEmail(to: string, token: string) {
     html: `<p>Click the link below to set a new password:</p><p><a href="${link}">${link}</a></p><p>This link expires in 1 hour. If you didn't request this, ignore this email.</p>`,
   });
 }
+
+export async function sendFamilyInvitationEmail(to: string, familyName: string) {
+  const link = `${process.env.APP_URL}/login`;
+
+  await resend.emails.send({
+    from: "MyFamily <onboarding@resend.dev>",
+    to,
+    subject: `You've been invited to join ${familyName} on MyFamily`,
+    html: `<p>You've been invited to join <strong>${familyName}</strong> on MyFamily.</p><p>Log in (or register with this email address) to accept the invitation: <a href="${link}">${link}</a></p><p>This invitation expires in 7 days.</p>`,
+  });
+}

@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useMutation } from "@tanstack/react-query";
+import { createBudgetSchema } from "@myfamily/shared";
 import { BUDGET_CATEGORIES, BUDGET_PERIODS } from "./constants";
 
 export function AddBudgetTile({ familyId }: { familyId: string }) {
@@ -15,10 +16,11 @@ export function AddBudgetTile({ familyId }: { familyId: string }) {
 
   const addBudget = useMutation({
     mutationFn: async () => {
+      const payload = createBudgetSchema.parse({ name, category, limitAmount: Number(limitAmount), period });
       const res = await fetch(`/api/family/${familyId}/budgets`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name, category, limitAmount: Number(limitAmount), period }),
+        body: JSON.stringify(payload),
       });
       if (!res.ok) throw new Error("Failed to create budget");
       return res.json();

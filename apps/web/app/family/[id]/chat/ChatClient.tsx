@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { sendMessageSchema, createGroupConversationSchema } from "@myfamily/shared";
 import { GroupsSidebar } from "./components/GroupsSidebar";
 import { ConversationPanel } from "./components/ConversationPanel";
 import { MembersSidebar } from "./components/MembersSidebar";
@@ -34,10 +35,11 @@ export function ChatClient({ familyId, conversations, members,memberId }: ChatCl
 
   const sendMessage = useMutation({
     mutationFn: async () => {
+      const payload = sendMessageSchema.parse({ content });
       const res = await fetch(`/api/conversations/${selectedId}/messages`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ content }),
+        body: JSON.stringify(payload),
       });
       if (!res.ok) throw new Error("Failed to send message");
       return res.json();
@@ -66,10 +68,11 @@ export function ChatClient({ familyId, conversations, members,memberId }: ChatCl
 
   const createGroup = useMutation({
     mutationFn: async ({ name, memberIds }: { name: string; memberIds: string[] }) => {
+      const payload = createGroupConversationSchema.parse({ name, memberIds });
       const res = await fetch(`/api/family/${familyId}/conversations`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ type: "GROUP_CUSTOM", name, memberIds }),
+        body: JSON.stringify({ type: "GROUP_CUSTOM", ...payload }),
       });
       if (!res.ok) throw new Error("Failed to create group");
       return res.json() as Promise<{ id: string }>;
@@ -82,10 +85,11 @@ export function ChatClient({ familyId, conversations, members,memberId }: ChatCl
 
   const editMessage = useMutation({
     mutationFn: async ({ messageId, content: newContent }: { messageId: string; content: string }) => {
+      const payload = sendMessageSchema.parse({ content: newContent });
       const res = await fetch(`/api/conversations/${selectedId}/messages/${messageId}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ content: newContent }),
+        body: JSON.stringify(payload),
       });
       if (!res.ok) throw new Error("Failed to edit message");
       return res.json();

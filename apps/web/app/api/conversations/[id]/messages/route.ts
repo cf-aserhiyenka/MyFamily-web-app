@@ -82,17 +82,21 @@ export async function POST(
     return NextResponse.json({ error: "Not a participant of this conversation" }, { status: 403 });
   }
 
-  const message = await prisma.message.create({
-    data: {
-      content: parsed.data.content,
-      conversationId,
-      senderId: member.id,
-    },
-  });
+  const message = await prisma.$transaction(async (t) => {
+    const created = await t.message.create({
+      data: {
+        content: parsed.data.content,
+        conversationId,
+        senderId: member.id,
+      },
+    });
 
-  await prisma.conversation.update({
-    where: { id: conversationId },
-    data: { lastMessageAt: message.sentAt },
+    await t.conversation.update({
+      where: { id: conversationId },
+      data: { lastMessageAt: created.sentAt },
+    });
+
+    return created;
   });
 
   return NextResponse.json({ id: message.id }, { status: 201 });

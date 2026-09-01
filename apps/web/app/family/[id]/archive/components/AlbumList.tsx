@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useMutation } from "@tanstack/react-query";
+import { createAlbumSchema } from "@myfamily/shared";
 
 export type AlbumRow = {
   id: string;
@@ -31,10 +32,11 @@ export function AlbumList({
 
   const createAlbum = useMutation({
     mutationFn: async () => {
+      const payload = createAlbumSchema.parse({ name: newAlbumName });
       const res = await fetch(`/api/family/${familyId}/albums`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name: newAlbumName }),
+        body: JSON.stringify(payload),
       });
       if (!res.ok) throw new Error("Failed to create album");
       return res.json();
