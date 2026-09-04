@@ -47,6 +47,7 @@ model Family {
   savingGoals   SavingGoal[]
   albums        Album[]
   mediaFiles    MediaFile[]
+  tasks         Task[]
 
   treeMemberships FamilyTreeMembership[]
   personRelations PersonRelation[]
@@ -76,6 +77,9 @@ model FamilyMember {
   goalContributions        GoalContribution[]         @relation("GoalContributionMember")
   createdAlbums            Album[]                    @relation("AlbumCreatedBy")
   uploadedMediaFiles       MediaFile[]                @relation("MediaFileUploadedBy")
+  assignedTasks            Task[]                     @relation("TaskAssignee")
+  createdTasks             Task[]                     @relation("TaskCreatedBy")
+  approvedTasks            Task[]                     @relation("TaskApprovedBy")
 
   addedTreeMemberships FamilyTreeMembership[]
 
@@ -383,4 +387,43 @@ model MediaFile {
   uploadedById String
 
   coverOfAlbum Album? @relation("AlbumCover")
+}
+
+enum TaskStatus {
+  PROPOSED
+  TODO
+  IN_PROGRESS
+  DONE
+  APPROVED
+}
+
+enum TaskPriority {
+  LOW
+  MEDIUM
+  HIGH
+}
+
+model Task {
+  id          String       @id @default(uuid())
+  title       String
+  description String?
+  status      TaskStatus
+  priority    TaskPriority
+  points      Int
+  dueDate     DateTime?
+  completedAt DateTime?
+  approvedAt  DateTime?
+  createdAt   DateTime     @default(now())
+
+  family   Family @relation(fields: [familyId], references: [id])
+  familyId String
+
+  assignee   FamilyMember? @relation("TaskAssignee", fields: [assigneeId], references: [id])
+  assigneeId String?
+
+  createdBy   FamilyMember @relation("TaskCreatedBy", fields: [createdById], references: [id])
+  createdById String
+
+  approvedBy   FamilyMember? @relation("TaskApprovedBy", fields: [approvedById], references: [id])
+  approvedById String?
 }
