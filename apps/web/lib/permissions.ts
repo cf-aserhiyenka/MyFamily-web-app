@@ -1,14 +1,20 @@
 import { prisma, MemberStatus, FamilyRole, type FamilyMember } from "@myfamily/db";
 
-//  RBAC.
 export const ROLE_PERMISSIONS: Record<
   FamilyRole,
-  { manageFamily: boolean; manageFinance: boolean; manageTree: boolean; manageArchive: boolean; chat: boolean }
+  {
+    manageFamily: boolean;
+    manageFinance: boolean;
+    manageTree: boolean;
+    manageArchive: boolean;
+    manageTasks: boolean;
+    chat: boolean;
+  }
 > = {
-  PARENT: { manageFamily: true, manageFinance: true, manageTree: true, manageArchive: true, chat: true },
-  GUARDIAN: { manageFamily: true, manageFinance: true, manageTree: true, manageArchive: true, chat: true },
-  CHILD: { manageFamily: false, manageFinance: false, manageTree: false, manageArchive: false, chat: true },
-  SENIOR: { manageFamily: false, manageFinance: false, manageTree: false, manageArchive: false, chat: true },
+  PARENT: { manageFamily: true, manageFinance: true, manageTree: true, manageArchive: true, manageTasks: true, chat: true },
+  GUARDIAN: { manageFamily: true, manageFinance: true, manageTree: true, manageArchive: true, manageTasks: true, chat: true },
+  CHILD: { manageFamily: false, manageFinance: false, manageTree: false, manageArchive: false, manageTasks: false, chat: true },
+  SENIOR: { manageFamily: false, manageFinance: false, manageTree: false, manageArchive: false, manageTasks: false, chat: true },
 };
 
 export type FamilyContext = {

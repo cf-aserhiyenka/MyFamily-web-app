@@ -12,3 +12,4 @@ export * from "./schemas/message";
 export * from "./schemas/finance";
 export * from "./schemas/media";
 export * from "./schemas/tree";
+export * from "./schemas/task";
