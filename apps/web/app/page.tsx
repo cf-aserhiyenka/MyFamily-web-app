@@ -26,7 +26,7 @@ export default async function HomePage() {
 
   const familyMembers = await prisma.familyMember.findMany({
     where: { userId: session.user.id },
-    include: { family: { include: { _count: { select: { members: true } } } } },
+    include: { family: true },
   });
 
   return (
@@ -35,7 +35,7 @@ export default async function HomePage() {
       families={familyMembers.map((member) => ({
         id: member.family.id,
         name: member.family.name,
-        memberCount: member.family._count.members,
+        avatarBase64: member.family.avatarBase64,
       }))}
     />
   );

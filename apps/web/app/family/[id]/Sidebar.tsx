@@ -1,7 +1,15 @@
 import Link from "next/link";
 
 // TODO: map function
-export function Sidebar({ familyId, familyName }: { familyId: string; familyName: string }) {
+export function Sidebar({
+  familyId,
+  familyName,
+  userName,
+}: {
+  familyId: string;
+  familyName: string;
+  userName?: string;
+}) {
 
 
   return (
@@ -9,7 +17,7 @@ export function Sidebar({ familyId, familyName }: { familyId: string; familyName
       <h2 className="font-bold">Family</h2>
       <p className="text-sm text-gray-500 mb-6">{familyName}</p>
 
-      <nav className="flex flex-col gap-2">
+      <nav className="flex flex-col gap-2 flex-1">
         <Link href="/">Home</Link>
         <Link href={`/family/${familyId}/dashboard`}>
           Dashboard
@@ -39,6 +47,12 @@ export function Sidebar({ familyId, familyName }: { familyId: string; familyName
           Settings
         </Link>
       </nav>
+
+      {userName && (
+        <div className="pt-4 mt-4 border-t text-sm text-gray-700">
+          Logged in as: <span className="font-medium">{userName}</span>
+        </div>
+      )}
     </aside>
   );
 }

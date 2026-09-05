@@ -6,7 +6,7 @@ import { signOut } from "next-auth/react";
 type FamilyRow = {
   id: string;
   name: string;
-  memberCount: number;
+  avatarBase64: string | null;
 };
 
 type DashboardClientProps = {
@@ -46,13 +46,29 @@ export function DashboardClient2(props: DashboardClientProps) {
         </div>
 
         {hasFamilies ? (
-          <div className="flex flex-col gap-4">
+          <div className="flex items-center flex-wrap justify-center gap-8 w-full">
             {families.map((family) => (
-              <Link key={family.id} href={`/family/${family.id}/dashboard`}>
-                <div  className="rounded-2xl border border-bark p-4">
-                  <p className="text-sm font-semibold">{family.name}</p>
-                  <p className="text-xs mt-1">{family.memberCount} members</p>
+              <Link
+                key={family.id}
+                href={`/family/${family.id}/dashboard`}
+                className="group flex flex-col items-center gap-2 shrink-0"
+              >
+                <div className="w-32 h-32 rounded-full bg-bark shadow-md overflow-hidden flex items-center justify-center transition-transform duration-300 ease-out group-hover:scale-125">
+                  {family.avatarBase64 ? (
+                    <img
+                      src={family.avatarBase64}
+                      alt={family.name}
+                      className="w-full h-full object-cover"
+                    />
+                  ) : (
+                    <span className="text-2xl font-bold text-cream">
+                      {family.name.slice(0, 2).toUpperCase()}
+                    </span>
+                  )}
                 </div>
+                <p className="text-sm font-semibold text-center max-w-32 truncate">
+                  {family.name}
+                </p>
               </Link>
             ))}
           </div>

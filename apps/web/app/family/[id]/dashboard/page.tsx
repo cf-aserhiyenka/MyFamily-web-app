@@ -20,6 +20,11 @@ export default async function DashboardPage({ params }: { params: Promise<{ id: 
     notFound();
   }
 
+  const [personNode, family] = await Promise.all([
+    prisma.personNode.findUnique({ where: { userId: session.user.id } }),
+    prisma.family.findUnique({ where: { id: familyId }, select: { name: true } }),
+  ]);
+
   const participants = await prisma.conversationParticipant.findMany({
     where: { memberId: member.id, leftAt: null },
     include: { conversation: true },
@@ -53,7 +58,12 @@ export default async function DashboardPage({ params }: { params: Promise<{ id: 
 
   return (
     <main className="flex-1 p-4 md:p-8 flex flex-col gap-6">
-      <h1 className="text-xl font-bold">Dashboard</h1>
+      <div>
+        <h1 className="text-xl font-bold">Dashboard</h1>
+        <p className="text-sm text-gray-500 mt-1">
+          Welcome back{personNode?.firstName ? `, ${personNode.firstName}` : ""}! Here&apos;s what&apos;s new in {family?.name ?? "your family"}.
+        </p>
+      </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <section className="rounded-2xl border border-bark p-4 shadow-sm">
