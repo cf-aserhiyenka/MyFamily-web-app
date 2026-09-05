@@ -1,6 +1,8 @@
-import Link from "next/link";
+"use client";
 
-// TODO: map function
+import Link from "next/link";
+import { usePathname } from "next/navigation";
+
 export function Sidebar({
   familyId,
   familyName,
@@ -10,7 +12,18 @@ export function Sidebar({
   familyName: string;
   userName?: string;
 }) {
+  const pathname = usePathname();
 
+  const links = [
+    { href: "/", label: "Home" },
+    { href: `/family/${familyId}/dashboard`, label: "Dashboard" },
+    { href: `/family/${familyId}/tree`, label: "Tree" },
+    { href: `/family/${familyId}/archive`, label: "Gallery" },
+    { href: `/family/${familyId}/chat`, label: "Chat" },
+    { href: `/family/${familyId}/finance`, label: "Finance" },
+    { href: `/family/${familyId}/tasks`, label: "Tasks" },
+    { href: `/family/${familyId}/settings`, label: "Settings" },
+  ];
 
   return (
     <aside className="flex flex-col w-64 border-r p-4">
@@ -18,34 +31,21 @@ export function Sidebar({
       <p className="text-sm text-gray-500 mb-6">{familyName}</p>
 
       <nav className="flex flex-col gap-2 flex-1">
-        <Link href="/">Home</Link>
-        <Link href={`/family/${familyId}/dashboard`}>
-          Dashboard
-        </Link>
+        {links.map((link) => {
+          const isActive =
+            link.href === "/" ? pathname === "/" : pathname.startsWith(link.href);
 
-        <Link href={`/family/${familyId}/tree`}>
-          Tree
-        </Link>
-
-        <Link href={`/family/${familyId}/archive`}>
-          Gallery
-        </Link>
-
-        <Link href={`/family/${familyId}/chat`}>
-          Chat
-        </Link>
-
-        <Link href={`/family/${familyId}/finance`}>
-          Finance
-        </Link>
-
-        <Link href={`/family/${familyId}/tasks`}>
-          Tasks
-        </Link>
-        
-        <Link href={`/family/${familyId}/settings`}>
-          Settings
-        </Link>
+          return (
+            <Link
+              key={link.href}
+              href={link.href}
+              aria-current={isActive ? "page" : undefined}
+              className={isActive ? "font-semibold text-bark underline" : undefined}
+            >
+              {link.label}
+            </Link>
+          );
+        })}
       </nav>
 
       {userName && (
