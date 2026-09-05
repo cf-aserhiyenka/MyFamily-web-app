@@ -78,11 +78,9 @@ export function MediaGrid({ familyId, files, onChanged }: MediaGridProps) {
         {files.map((file) => (
           <MediaCard
             key={file.id}
-            familyId={familyId}
             file={file}
             selected={selectedIds.has(file.id)}
             onToggleSelect={() => toggleSelect(file.id)}
-            onChanged={onChanged}
             onOpen={() => setPreviewFile(file)}
           />
         ))}
