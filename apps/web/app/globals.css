@@ -3,6 +3,8 @@
 @theme {
   --color-cream: #f8f4ec;
   --color-bark: #3d2f24;
+  --color-error: #b5533c;
+  --color-success: #6b7a4f;
   --font-body: var(--font-nunito);
   /* --font-heading: var(--font-lato); */
 

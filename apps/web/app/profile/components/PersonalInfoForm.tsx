@@ -206,7 +206,7 @@ export function PersonalInfoForm({
           type="button"
           disabled={isDeleting}
           onClick={onDeleteAccount}
-          className="text-cream font-medium text-sm px-5 py-2.5 rounded-lg shadow-sm transition bg-red-600 hover:bg-red-800 disabled:opacity-50"
+          className="text-cream font-medium text-sm px-5 py-2.5 rounded-lg shadow-sm transition bg-error hover:opacity-90 disabled:opacity-50"
         >
           {isDeleting ? "Deleting..." : "Delete"}
         </button>

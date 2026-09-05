@@ -121,7 +121,7 @@ export function TransactionItem({
           placeholder="Note (optional)"
           className="border border-bark rounded-lg px-2 py-1 text-sm"
         />
-        {updateExpense.isError && <p className="text-xs text-red-600">Could not save changes.</p>}
+        {updateExpense.isError && <p className="text-xs text-error">Could not save changes.</p>}
         <div className="flex gap-2">
           <button
             type="submit"
@@ -172,7 +172,7 @@ export function TransactionItem({
           {deleteExpense.isPending ? "Deleting..." : "Delete"}
         </button>
       </div>
-      {deleteExpense.isError && <p className="text-xs text-red-600">Could not delete transaction.</p>}
+      {deleteExpense.isError && <p className="text-xs text-error">Could not delete transaction.</p>}
     </div>
   );
 }

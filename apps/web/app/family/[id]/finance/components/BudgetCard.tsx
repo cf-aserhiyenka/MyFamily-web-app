@@ -96,7 +96,7 @@ export function BudgetCard({ familyId, budget }: { familyId: string; budget: Bud
             </option>
           ))}
         </select>
-        {updateBudget.isError && <p className="text-xs text-red-600">Could not save changes.</p>}
+        {updateBudget.isError && <p className="text-xs text-error">Could not save changes.</p>}
         <div className="flex gap-2">
           <button
             type="submit"
@@ -146,7 +146,7 @@ export function BudgetCard({ familyId, budget }: { familyId: string; budget: Bud
           {deleteBudget.isPending ? "Deleting..." : "Delete"}
         </button>
       </div>
-      {deleteBudget.isError && <p className="text-xs text-red-600">Could not delete budget.</p>}
+      {deleteBudget.isError && <p className="text-xs text-error">Could not delete budget.</p>}
     </div>
   );
 }

@@ -146,7 +146,7 @@ export function TaskCard({
             </option>
           ))}
         </select>
-        {updateTask.isError && <p className="text-xs text-red-600">Could not save changes.</p>}
+        {updateTask.isError && <p className="text-xs text-error">Could not save changes.</p>}
         <div className="flex gap-2">
           <button
             type="submit"
@@ -246,9 +246,9 @@ export function TaskCard({
       </div>
 
       {(acceptTask.isError || startTask.isError || completeTask.isError || approveTask.isError) && (
-        <p className="text-xs text-red-600">Action failed, try again.</p>
+        <p className="text-xs text-error">Action failed, try again.</p>
       )}
-      {deleteTask.isError && <p className="text-xs text-red-600">Could not delete task.</p>}
+      {deleteTask.isError && <p className="text-xs text-error">Could not delete task.</p>}
     </div>
   );
 }
