@@ -5,24 +5,6 @@ import { prisma, AlbumType } from "@myfamily/db";
 import { createAlbumSchema } from "@myfamily/shared";
 import { getFamilyContext } from "@/lib/permissions";
 
-async function getOrCreateDefaultAlbum(familyId: string) {
-  const existing = await prisma.album.findFirst({
-    where: { familyId, type: AlbumType.DEFAULT },
-  });
-
-  if (existing) {
-    return existing;
-  }
-
-  return prisma.album.create({
-    data: {
-      name: "Wszystkie zdjęcia",
-      type: AlbumType.DEFAULT,
-      familyId,
-    },
-  });
-}
-
 export async function GET(
   request: Request,
   { params }: { params: Promise<{ id: string }> }
@@ -40,8 +22,6 @@ export async function GET(
     return NextResponse.json({ error: "You are not a member of this family" }, { status: 403 });
   }
 
-  await getOrCreateDefaultAlbum(familyId);
-
   const albums = await prisma.album.findMany({
     where: { familyId },
     include: { _count: { select: { files: true } } },
@@ -54,11 +34,8 @@ export async function GET(
     id: album.id,
     name: album.name,
     description: album.description,
-    type: album.type,
     fileCount: album._count.files,
-    canDelete:
-      album.type === AlbumType.CUSTOM &&
-      (album.createdById === membership.id || context.permissions?.manageArchive === true),
+    canDelete: album.createdById === membership.id || context.permissions?.manageArchive === true,
   }));
 
   return NextResponse.json({ albums: result }, { status: 200 });

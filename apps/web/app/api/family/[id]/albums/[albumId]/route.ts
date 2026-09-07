@@ -1,7 +1,8 @@
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
-import { prisma, MemberStatus, FamilyRole, AlbumType } from "@myfamily/db";
+import { prisma, MemberStatus, FamilyRole } from "@myfamily/db";
+import { deleteMediaObject } from "@/lib/s3";
 
 export async function DELETE(
   request: Request,
@@ -28,10 +29,6 @@ export async function DELETE(
     return NextResponse.json({ error: "Album not found" }, { status: 404 });
   }
 
-  if (album.type === AlbumType.DEFAULT) {
-    return NextResponse.json({ error: "The default album cannot be deleted" }, { status: 400 });
-  }
-
   const isOwner = album.createdById === membership.id;
   const isModerator =
     membership.role === FamilyRole.PARENT || membership.role === FamilyRole.GUARDIAN;
@@ -40,21 +37,22 @@ export async function DELETE(
     return NextResponse.json({ error: "Not permitted" }, { status: 403 });
   }
 
-  const defaultAlbum = await prisma.album.findFirst({
-    where: { familyId, type: AlbumType.DEFAULT },
-  });
-
-  if (!defaultAlbum) {
-    return NextResponse.json({ error: "Default album not found" }, { status: 500 });
-  }
+  const files = await prisma.mediaFile.findMany({ where: { albumId } });
 
   await prisma.$transaction([
-    prisma.mediaFile.updateMany({
-      where: { albumId },
-      data: { albumId: defaultAlbum.id },
-    }),
+    prisma.mediaFile.deleteMany({ where: { albumId } }),
     prisma.album.delete({ where: { id: albumId } }),
   ]);
+
+  await Promise.all(
+    files.map(async (file) => {
+      try {
+        await deleteMediaObject(file.storageKey);
+      } catch (error) {
+        console.error("Failed to delete media object from storage", error);
+      }
+    })
+  );
 
   return NextResponse.json({ ok: true }, { status: 200 });
 }

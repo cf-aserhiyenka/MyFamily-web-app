@@ -8,22 +8,6 @@ import { getFamilyContext } from "@/lib/permissions";
 
 const ALLOWED_MIME_TYPES = ["image/jpeg", "image/png"];
 
-async function getOrCreateDefaultAlbumId(familyId: string) {
-  const existing = await prisma.album.findFirst({
-    where: { familyId, type: "DEFAULT" },
-  });
-
-  if (existing) {
-    return existing.id;
-  }
-
-  const created = await prisma.album.create({
-    data: { name: "Wszystkie zdjęcia", type: "DEFAULT", familyId },
-  });
-
-  return created.id;
-}
-
 export async function GET(
   request: Request,
   { params }: { params: Promise<{ id: string }> }
@@ -91,7 +75,7 @@ export async function POST(
     return NextResponse.json({ error: "Storage key does not belong to this family" }, { status: 403 });
   }
 
-  const albumId = parsed.data.albumId ?? (await getOrCreateDefaultAlbumId(familyId));
+  const albumId = parsed.data.albumId;
 
   const album = await prisma.album.findUnique({ where: { id: albumId } });
   if (!album || album.familyId !== familyId) {

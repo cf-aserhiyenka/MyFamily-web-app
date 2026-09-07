@@ -7,7 +7,6 @@ import { createAlbumSchema } from "@myfamily/shared";
 export type AlbumRow = {
   id: string;
   name: string;
-  type: "DEFAULT" | "CUSTOM";
   fileCount: number;
   canDelete: boolean;
 };
@@ -94,9 +93,8 @@ export function AlbumList({
             <button
               type="button"
               onClick={() => {
-                const defaultAlbum = albums.find((a) => a.type === "DEFAULT");
                 const ok = confirm(
-                  `Delete album "${album.name}"? Photos inside will move to "${defaultAlbum?.name ?? "the default album"}", not be deleted.`
+                  `Delete album "${album.name}"? All photos inside will be permanently deleted.`
                 );
                 if (ok) deleteAlbum.mutate(album.id);
               }}

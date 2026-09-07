@@ -15,7 +15,7 @@ export const createMediaFileSchema = z.object({
   originalName: z.string().trim().min(1, "Original name is required"),
   mimeType: z.string(),
   sizeBytes: z.number().int(),
-  albumId: z.string().optional(),
+  albumId: z.string().min(1, "Album is required"),
 });
 
 export type CreateMediaFileInput = z.infer<typeof createMediaFileSchema>;
