@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { TaskCard } from "./TaskCard";
 
 export type TaskRow = {
@@ -15,13 +16,16 @@ export type TaskRow = {
   createdByName: string;
 };
 
-const STATUS_SECTIONS = [
+const STATUS_FILTERS = [
+  { key: "ALL", label: "All" },
   { key: "PROPOSED", label: "Proposed" },
   { key: "TODO", label: "To do" },
   { key: "IN_PROGRESS", label: "In progress" },
   { key: "DONE", label: "Waiting for approval" },
   { key: "APPROVED", label: "Approved" },
 ] as const;
+
+type StatusFilter = (typeof STATUS_FILTERS)[number]["key"];
 
 export function TaskList({
   familyId,
@@ -38,33 +42,41 @@ export function TaskList({
   tasks: TaskRow[];
   onChanged: () => void;
 }) {
+  const [filter, setFilter] = useState<StatusFilter>("ALL");
+
+  const filteredTasks = filter === "ALL" ? tasks : tasks.filter((task) => task.status === filter);
+
   return (
-    <div className="flex flex-col gap-6">
-      {STATUS_SECTIONS.map((section) => {
-        const sectionTasks = tasks.filter((task) => task.status === section.key);
-        if (sectionTasks.length === 0) return null;
+    <div className="flex flex-col gap-4">
+      <div className="flex gap-2 flex-wrap">
+        {STATUS_FILTERS.map((s) => (
+          <button
+            key={s.key}
+            type="button"
+            onClick={() => setFilter(s.key)}
+            className={`border border-bark rounded-full px-3 py-1 text-xs ${
+              filter === s.key ? "bg-bark text-cream" : ""
+            }`}
+          >
+            {s.label}
+          </button>
+        ))}
+      </div>
 
-        return (
-          <section key={section.key} className="flex flex-col gap-2">
-            <h2 className="text-lg font-semibold">{section.label}</h2>
-            <div className="flex flex-col gap-2">
-              {sectionTasks.map((task) => (
-                <TaskCard
-                  key={task.id}
-                  familyId={familyId}
-                  myMemberId={myMemberId}
-                  canManageTasks={canManageTasks}
-                  members={members}
-                  task={task}
-                  onChanged={onChanged}
-                />
-              ))}
-            </div>
-          </section>
-        );
-      })}
-
-      {tasks.length === 0 && <p className="text-sm">No tasks yet.</p>}
+      <div className="flex flex-col gap-2">
+        {filteredTasks.map((task) => (
+          <TaskCard
+            key={task.id}
+            familyId={familyId}
+            myMemberId={myMemberId}
+            canManageTasks={canManageTasks}
+            members={members}
+            task={task}
+            onChanged={onChanged}
+          />
+        ))}
+        {filteredTasks.length === 0 && <p className="text-sm">No tasks here.</p>}
+      </div>
     </div>
   );
 }

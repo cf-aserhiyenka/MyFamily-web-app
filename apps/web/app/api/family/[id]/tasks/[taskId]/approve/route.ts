@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
-import { prisma, MemberStatus, FamilyRole, TaskStatus } from "@myfamily/db";
+import { prisma, MemberStatus, FamilyRole, TaskStatus, TransactionType } from "@myfamily/db";
 
 export async function POST(
   request: Request,
@@ -32,10 +32,29 @@ export async function POST(
   if (task.status !== TaskStatus.DONE) {
     return NextResponse.json({ error: "Task is not done yet" }, { status: 400 });
   }
+  const assigneeId = task.assigneeId;
+  if (!assigneeId) {
+    return NextResponse.json({ error: "Task has no assignee to reward" }, { status: 400 });
+  }
 
-  const updated = await prisma.task.update({
-    where: { id: taskId },
-    data: { status: TaskStatus.APPROVED, approvedById: membership.id, approvedAt: new Date() },
+  const updated = await prisma.$transaction(async (tx) => {
+    const result = await tx.task.update({
+      where: { id: taskId },
+      data: { status: TaskStatus.APPROVED, approvedById: membership.id, approvedAt: new Date() },
+    });
+
+    // DONE -> APPROVED is the only transition that awards points (see TODO/diamrams/3).
+    await tx.pointTransaction.create({
+      data: {
+        amount: task.points,
+        type: TransactionType.TASK_REWARD,
+        reason: `Task approved: ${task.title}`,
+        memberId: assigneeId,
+        taskId: task.id,
+      },
+    });
+
+    return result;
   });
 
   return NextResponse.json({ id: updated.id, status: updated.status });
