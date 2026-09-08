@@ -48,6 +48,7 @@ model Family {
   albums        Album[]
   mediaFiles    MediaFile[]
   tasks         Task[]
+  rewards       Reward[]
 
   treeMemberships FamilyTreeMembership[]
   personRelations PersonRelation[]
@@ -80,6 +81,9 @@ model FamilyMember {
   assignedTasks            Task[]                     @relation("TaskAssignee")
   createdTasks             Task[]                     @relation("TaskCreatedBy")
   approvedTasks            Task[]                     @relation("TaskApprovedBy")
+  createdRewards           Reward[]                   @relation("RewardCreatedBy")
+  rewardRedemptions        RewardRedemption[]
+  pointTransactions        PointTransaction[]
 
   addedTreeMemberships FamilyTreeMembership[]
 
@@ -96,7 +100,6 @@ enum FamilyRole {
 enum MemberStatus {
   PENDING
   ACTIVE
-  SUSPENDED
   LEFT
   REMOVED
 }
@@ -359,9 +362,6 @@ model Album {
   createdBy   FamilyMember? @relation("AlbumCreatedBy", fields: [createdById], references: [id])
   createdById String?
 
-  coverFile   MediaFile? @relation("AlbumCover", fields: [coverFileId], references: [id])
-  coverFileId String?    @unique
-
   files MediaFile[] @relation("AlbumFiles")
 }
 
@@ -385,8 +385,6 @@ model MediaFile {
 
   uploadedBy   FamilyMember @relation("MediaFileUploadedBy", fields: [uploadedById], references: [id])
   uploadedById String
-
-  coverOfAlbum Album? @relation("AlbumCover")
 }
 
 enum TaskStatus {
@@ -426,4 +424,61 @@ model Task {
 
   approvedBy   FamilyMember? @relation("TaskApprovedBy", fields: [approvedById], references: [id])
   approvedById String?
+
+  pointTransaction PointTransaction?
+}
+
+model Reward {
+  id          String   @id @default(uuid())
+  name        String
+  description String?
+  pointCost   Int
+  stock       Int?
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+
+  family   Family @relation(fields: [familyId], references: [id])
+  familyId String
+
+  createdBy   FamilyMember @relation("RewardCreatedBy", fields: [createdById], references: [id])
+  createdById String
+
+  redemptions RewardRedemption[]
+}
+
+model RewardRedemption {
+  id          String   @id @default(uuid())
+  pointsSpent Int
+  redeemedAt  DateTime @default(now())
+
+  reward   Reward @relation(fields: [rewardId], references: [id])
+  rewardId String
+
+  member   FamilyMember @relation(fields: [memberId], references: [id])
+  memberId String
+
+  pointTransaction PointTransaction?
+}
+
+model PointTransaction {
+  id        String          @id @default(uuid())
+  amount    Int
+  type      TransactionType
+  reason    String?
+  createdAt DateTime        @default(now())
+
+  member   FamilyMember @relation(fields: [memberId], references: [id])
+  memberId String
+
+  task   Task?   @relation(fields: [taskId], references: [id])
+  taskId String? @unique
+
+  redemption   RewardRedemption? @relation(fields: [redemptionId], references: [id])
+  redemptionId String?           @unique
+}
+
+enum TransactionType {
+  TASK_REWARD
+  REWARD_REDEMPTION
+  MANUAL_ADJUSTMENT
 }
