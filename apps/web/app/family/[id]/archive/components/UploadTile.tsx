@@ -98,7 +98,7 @@ export function UploadTile({ familyId, albumId, onUploaded }: UploadTileProps) {
         className="hidden"
       />
       {upload.isPending && <p className="text-xs">Uploading...</p>}
-      {error && <p className="text-xs text-red-600">{error}</p>}
+      {error && <p className="text-xs text-error">{error}</p>}
     </div>
   );
 }

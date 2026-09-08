@@ -130,7 +130,7 @@ export function AddTaskTile({
       {!canManageTasks && (
         <p className="text-xs">This will be sent as a proposal to a parent/guardian first.</p>
       )}
-      {addTask.isError && <p className="text-xs text-red-600">Could not save task.</p>}
+      {addTask.isError && <p className="text-xs text-error">Could not save task.</p>}
       <div className="flex gap-2">
         <button
           type="submit"

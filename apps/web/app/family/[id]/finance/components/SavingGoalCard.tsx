@@ -96,7 +96,7 @@ export function SavingGoalCard({ familyId, goal }: { familyId: string; goal: Sav
           />
           Achieved
         </label>
-        {updateGoal.isError && <p className="text-xs text-red-600">Could not save changes.</p>}
+        {updateGoal.isError && <p className="text-xs text-error">Could not save changes.</p>}
         <div className="flex gap-2">
           <button
             type="submit"
@@ -150,7 +150,7 @@ export function SavingGoalCard({ familyId, goal }: { familyId: string; goal: Sav
         )}
       </div>
       {deleteGoal.isError && (
-        <p className="text-xs text-red-600">{(deleteGoal.error as Error).message}</p>
+        <p className="text-xs text-error">{(deleteGoal.error as Error).message}</p>
       )}
       <AddContributionForm goalId={goal.id} />
     </div>

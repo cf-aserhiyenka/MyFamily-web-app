@@ -337,7 +337,7 @@ async function main() {
   });
 
   await prisma.album.create({
-    data: { name: "All photos", type: AlbumType.DEFAULT, familyId: newmanFamily.id },
+    data: { name: "Family Photos", type: AlbumType.CUSTOM, familyId: newmanFamily.id, createdById: markMember.id },
   });
   await prisma.album.create({
     data: { name: "Vacation 2025", type: AlbumType.CUSTOM, familyId: newmanFamily.id, createdById: markMember.id },
