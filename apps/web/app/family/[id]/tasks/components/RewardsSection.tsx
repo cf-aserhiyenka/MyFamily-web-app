@@ -138,7 +138,14 @@ export function RewardsSection({
       <h2 className="text-lg font-semibold">Rewards</h2>
       <div className="flex flex-col gap-2">
         {rewards.map((reward) => (
-          <RewardCard key={reward.id} myBalance={myBalance} reward={reward} onChanged={onChanged} />
+          <RewardCard
+            key={reward.id}
+            familyId={familyId}
+            myBalance={myBalance}
+            canManageTasks={canManageTasks}
+            reward={reward}
+            onChanged={onChanged}
+          />
         ))}
         {rewards.length === 0 && <p className="text-sm">No rewards yet.</p>}
         {canManageTasks && <AddRewardTile familyId={familyId} onCreated={onChanged} />}

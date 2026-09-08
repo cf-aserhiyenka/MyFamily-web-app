@@ -144,7 +144,13 @@ export function TasksClient({
       )}
 
       {activeTab === "members" && (
-        <MembersSection myMemberId={myMemberId} balances={pointsData?.balances ?? []} />
+        <MembersSection
+          familyId={familyId}
+          myMemberId={myMemberId}
+          canManageTasks={canManageTasks}
+          balances={pointsData?.balances ?? []}
+          onChanged={refreshPoints}
+        />
       )}
     </div>
   );
