@@ -8,3 +8,9 @@ export const createRewardSchema = z.object({
 });
 
 export type CreateRewardInput = z.infer<typeof createRewardSchema>;
+
+export const updateRewardSchema = createRewardSchema.partial().extend({
+  isActive: z.boolean().optional(),
+});
+
+export type UpdateRewardInput = z.infer<typeof updateRewardSchema>;

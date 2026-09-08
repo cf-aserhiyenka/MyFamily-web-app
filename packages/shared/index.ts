@@ -14,3 +14,4 @@ export * from "./schemas/media";
 export * from "./schemas/tree";
 export * from "./schemas/task";
 export * from "./schemas/reward";
+export * from "./schemas/points";
