@@ -29,6 +29,7 @@ export default async function TreePage({ params }: { params: Promise<{ id: strin
       persons={persons}
       relations={relations}
       generations={generations}
+      canManageRelations={permissions.permissions?.manageTree === true}
     />
   );
 }

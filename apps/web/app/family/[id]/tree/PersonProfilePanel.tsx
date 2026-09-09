@@ -4,7 +4,13 @@ import { useState, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { updatePersonSchema, type UpdatePersonInput } from "@myfamily/shared";
+import { updatePersonSchema, type UpdatePersonInput, type RelationDirection } from "@myfamily/shared";
+import type { PersonRelation } from "@myfamily/db";
+import {
+  relationDirectionLabels,
+  resolveRelationDirection,
+  describeRelationForSubject,
+} from "@/lib/personRelations";
 
 export type TreePersonDetails = {
   id: string;
@@ -35,16 +41,84 @@ export function PersonProfilePanel({
   familyId,
   person,
   currentUserId,
+  persons,
+  relations,
+  canManageRelations,
 }: {
   familyId: string;
   person: TreePersonDetails;
   currentUserId: string;
+  persons: { id: string; firstName: string; lastName: string }[];
+  relations: PersonRelation[];
+  canManageRelations: boolean;
 }) {
   const router = useRouter();
   const [isEditing, setIsEditing] = useState(false);
   const [saveError, setSaveError] = useState("");
   const [avatar, setAvatar] = useState<string | null>(person.avatarBase64);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const [relationError, setRelationError] = useState("");
+  const [isAddingRelation, setIsAddingRelation] = useState(false);
+  const [newRelationDirection, setNewRelationDirection] = useState<RelationDirection | "">("");
+  const [newRelationPersonId, setNewRelationPersonId] = useState("");
+
+  const personRelations = relations.filter(
+    (r) => r.personAId === person.id || r.personBId === person.id
+  );
+
+  function otherPersonName(otherId: string) {
+    const other = persons.find((p) => p.id === otherId);
+    return other ? `${other.firstName} ${other.lastName}` : "Unknown";
+  }
+
+  const relationCandidates = persons.filter(
+    (p) => p.id !== person.id && !personRelations.some((r) => r.personAId === p.id || r.personBId === p.id)
+  );
+
+  async function onAddRelation() {
+    if (!newRelationDirection || !newRelationPersonId) return;
+    setRelationError("");
+
+    const { relation, personAId, personBId } = resolveRelationDirection(
+      newRelationDirection,
+      person.id,
+      newRelationPersonId
+    );
+
+    const response = await fetch(`/api/family/${familyId}/tree/relations`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ personAId, personBId, relation }),
+    });
+
+    if (!response.ok) {
+      const body = await response.json();
+      setRelationError(body.error ?? "Could not add this relation.");
+      return;
+    }
+
+    setNewRelationDirection("");
+    setNewRelationPersonId("");
+    setIsAddingRelation(false);
+    router.refresh();
+  }
+
+  async function onRemoveRelation(relationId: string) {
+    setRelationError("");
+
+    const response = await fetch(`/api/family/${familyId}/tree/relations/${relationId}`, {
+      method: "DELETE",
+    });
+
+    if (!response.ok) {
+      const body = await response.json();
+      setRelationError(body.error ?? "Could not remove this relation.");
+      return;
+    }
+
+    router.refresh();
+  }
 
   const {
     register,
@@ -94,6 +168,119 @@ export function PersonProfilePanel({
     setIsEditing(false);
     router.refresh();
   }
+
+  async function onDelete() {
+    const ok = confirm(
+      `Delete ${person.firstName} ${person.lastName} from the family tree? This also removes their relations. This cannot be undone.`
+    );
+    if (!ok) return;
+
+    setSaveError("");
+
+    const response = await fetch(`/api/family/${familyId}/tree/persons/${person.id}`, {
+      method: "DELETE",
+    });
+
+    if (!response.ok) {
+      const body = await response.json();
+      setSaveError(body.error ?? "Could not delete this person.");
+      return;
+    }
+
+    setIsEditing(false);
+    router.refresh();
+  }
+
+  const canDelete = canEdit && !person.userId;
+
+  const relationsSection = (
+    <div className="flex flex-col gap-2 pt-2 border-t border-bark/20">
+      <p className="text-xs font-semibold">Relations</p>
+      {personRelations.length === 0 && <p className="text-xs opacity-60">No relations yet.</p>}
+      {personRelations.map((r) => {
+        const isSubjectPersonA = r.personAId === person.id;
+        const otherId = isSubjectPersonA ? r.personBId : r.personAId;
+        return (
+          <div key={r.id} className="flex items-center justify-between gap-2 text-xs">
+            <span>
+              {describeRelationForSubject(r.relation, isSubjectPersonA)} {otherPersonName(otherId)}
+            </span>
+            {canManageRelations && (
+              <button
+                type="button"
+                onClick={() => onRemoveRelation(r.id)}
+                className="opacity-60 hover:opacity-100"
+              >
+                Remove
+              </button>
+            )}
+          </div>
+        );
+      })}
+
+      {canManageRelations && relationCandidates.length > 0 && (
+        isAddingRelation ? (
+          <div className="flex flex-col gap-2">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+              <select
+                className="rounded-lg border border-bark p-2 text-xs focus:outline-none transition"
+                value={newRelationDirection}
+                onChange={(e) => setNewRelationDirection(e.target.value as RelationDirection | "")}
+              >
+                <option value="">Select relation</option>
+                {Object.entries(relationDirectionLabels).map(([value, label]) => (
+                  <option key={value} value={value}>
+                    {label}
+                  </option>
+                ))}
+              </select>
+              <select
+                className="rounded-lg border border-bark p-2 text-xs focus:outline-none transition"
+                value={newRelationPersonId}
+                onChange={(e) => setNewRelationPersonId(e.target.value)}
+              >
+                <option value="">Select person</option>
+                {relationCandidates.map((p) => (
+                  <option key={p.id} value={p.id}>
+                    {p.firstName} {p.lastName}
+                  </option>
+                ))}
+              </select>
+            </div>
+            {relationError && <span className="text-xs">{relationError}</span>}
+            <div className="flex gap-2">
+              <button
+                type="button"
+                onClick={onAddRelation}
+                disabled={!newRelationDirection || !newRelationPersonId}
+                className="self-start text-xs border border-bark font-medium px-3 py-1.5 rounded-lg transition disabled:opacity-50"
+              >
+                Add relation
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setIsAddingRelation(false);
+                  setRelationError("");
+                }}
+                className="self-start text-xs px-3 py-1.5 rounded-lg transition"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        ) : (
+          <button
+            type="button"
+            onClick={() => setIsAddingRelation(true)}
+            className="self-start text-xs border border-bark font-medium px-3 py-1.5 rounded-lg transition"
+          >
+            + Add relation
+          </button>
+        )
+      )}
+    </div>
+  );
 
   if (isEditing) {
     return (
@@ -208,6 +395,8 @@ export function PersonProfilePanel({
 
         {saveError && <span className="text-xs">{saveError}</span>}
 
+        {relationsSection}
+
         <div className="flex gap-2 mt-1">
           <button
             type="submit"
@@ -223,6 +412,15 @@ export function PersonProfilePanel({
           >
             Cancel
           </button>
+          {canDelete && (
+            <button
+              type="button"
+              onClick={onDelete}
+              className="self-start text-xs px-3 py-2 rounded-lg transition opacity-70 hover:opacity-100"
+            >
+              Delete person
+            </button>
+          )}
         </div>
       </form>
     );
@@ -264,14 +462,31 @@ export function PersonProfilePanel({
 
       {person.bio && <p className="text-sm whitespace-pre-wrap">{person.bio}</p>}
 
+      {relationsSection}
+
+      {saveError && <span className="text-xs">{saveError}</span>}
+
       {canEdit && (
-        <button
-          type="button"
-          onClick={() => setIsEditing(true)}
-          className="self-start text-xs border border-bark font-medium px-3 py-1.5 rounded-lg transition"
-        >
-          Edit
-        </button>
+        <div className="flex gap-2">
+          {canEdit && (
+            <button
+              type="button"
+              onClick={() => setIsEditing(true)}
+              className="self-start text-xs border border-bark font-medium px-3 py-1.5 rounded-lg transition"
+            >
+              Edit
+            </button>
+          )}
+          {canDelete && (
+            <button
+              type="button"
+              onClick={onDelete}
+              className="self-start text-xs px-3 py-1.5 rounded-lg transition opacity-70 hover:opacity-100"
+            >
+              Delete
+            </button>
+          )}
+        </div>
       )}
     </div>
   );

@@ -4,6 +4,7 @@ import { authOptions } from "@/lib/auth";
 import { prisma } from "@myfamily/db";
 import { createPersonSchema } from "@myfamily/shared";
 import { getFamilyContext } from "@/lib/permissions";
+import { resolveRelationDirection } from "@/lib/personRelations";
 
 export async function POST(request: Request, { params }: { params: Promise<{ id: string }> }) {
   const session = await getServerSession(authOptions);
@@ -32,16 +33,47 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
     );
   }
 
-  const { firstName, lastName, birthDate, deathDate } = parsed.data;
+  const {
+    firstName,
+    lastName,
+    maidenName,
+    birthDate,
+    birthPlace,
+    deathDate,
+    deathPlace,
+    occupation,
+    bio,
+    avatarBase64,
+    relatedPersonId,
+    relationToPerson,
+  } = parsed.data;
   const membership = context.membership;
+
+  if (relatedPersonId) {
+    const relatedMembership = await prisma.familyTreeMembership.findUnique({
+      where: { personId_familyId: { personId: relatedPersonId, familyId } },
+    });
+    if (!relatedMembership) {
+      return NextResponse.json(
+        { error: "The person you want to relate to is not in this family's tree" },
+        { status: 400 }
+      );
+    }
+  }
 
   const person = await prisma.$transaction(async (tx) => {
     const created = await tx.personNode.create({
       data: {
         firstName,
         lastName,
+        maidenName: maidenName || null,
         birthDate: birthDate ? new Date(birthDate) : null,
+        birthPlace: birthPlace || null,
         deathDate: deathDate ? new Date(deathDate) : null,
+        deathPlace: deathPlace || null,
+        occupation: occupation || null,
+        bio: bio || null,
+        avatarBase64: avatarBase64 || null,
         createdById: session.user.id,
       },
     });
@@ -49,6 +81,17 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
     await tx.familyTreeMembership.create({
       data: { personId: created.id, familyId, addedById: membership.id },
     });
+
+    if (relatedPersonId && relationToPerson) {
+      const { relation, personAId, personBId } = resolveRelationDirection(
+        relationToPerson,
+        created.id,
+        relatedPersonId
+      );
+      await tx.personRelation.create({
+        data: { familyId, personAId, personBId, relation, createdById: session.user.id },
+      });
+    }
 
     return created;
   });
