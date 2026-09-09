@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -12,6 +12,7 @@ import {
 } from "@myfamily/shared";
 import type { PersonRelation } from "@myfamily/db";
 import type { GenerationRow } from "@/lib/tree";
+import { relationDirectionLabels } from "@/lib/personRelations";
 import { TreeView } from "./TreeView";
 
 type TreeClientProps = {
@@ -20,6 +21,7 @@ type TreeClientProps = {
   persons: { id: string; firstName: string; lastName: string }[];
   relations: PersonRelation[];
   generations: GenerationRow[];
+  canManageRelations: boolean;
 };
 
 const relationLabels: Record<CreateRelationInput["relation"], string> = {
@@ -28,10 +30,19 @@ const relationLabels: Record<CreateRelationInput["relation"], string> = {
   SIBLING_OF: "is sibling of",
 };
 
-export function TreeClient({ familyId, currentUserId, persons, relations, generations }: TreeClientProps) {
+export function TreeClient({
+  familyId,
+  currentUserId,
+  persons,
+  relations,
+  generations,
+  canManageRelations,
+}: TreeClientProps) {
   const router = useRouter();
   const [showAddForm, setShowAddForm] = useState(false);
   const [addError, setAddError] = useState("");
+  const [avatar, setAvatar] = useState<string | null>(null);
+  const avatarInputRef = useRef<HTMLInputElement>(null);
   const [showRelationForm, setShowRelationForm] = useState(false);
   const [relationError, setRelationError] = useState("");
 
@@ -43,6 +54,15 @@ export function TreeClient({ familyId, currentUserId, persons, relations, genera
   } = useForm<CreatePersonInput>({
     resolver: zodResolver(createPersonSchema),
   });
+
+  function onAvatarSelected(event: React.ChangeEvent<HTMLInputElement>) {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = () => setAvatar(reader.result as string);
+    reader.readAsDataURL(file);
+  }
 
   const {
     register: registerRelation,
@@ -59,7 +79,7 @@ export function TreeClient({ familyId, currentUserId, persons, relations, genera
     const response = await fetch(`/api/family/${familyId}/tree/persons`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(data),
+      body: JSON.stringify({ ...data, avatarBase64: avatar }),
     });
 
     if (!response.ok) {
@@ -69,6 +89,8 @@ export function TreeClient({ familyId, currentUserId, persons, relations, genera
     }
 
     reset();
+    setAvatar(null);
+    if (avatarInputRef.current) avatarInputRef.current.value = "";
     setShowAddForm(false);
     router.refresh();
   }
@@ -118,40 +140,144 @@ export function TreeClient({ familyId, currentUserId, persons, relations, genera
 
       {showAddForm && (
         <form className="flex flex-col gap-2 p-3 rounded-xl border border-bark" onSubmit={handleSubmit(onSubmit)}>
-          <input
-            type="text"
-            placeholder="First name"
-            className="rounded-lg border border-bark p-2 text-sm focus:outline-none transition"
-            {...register("firstName")}
-          />
-          {errors.firstName && <span className="text-xs">{errors.firstName.message}</span>}
+          <div className="flex items-center gap-4">
+            <div className="w-16 h-16 shrink-0 rounded-full bg-bark text-cream overflow-hidden flex items-center justify-center font-bold">
+              {avatar && <img src={avatar} alt="" className="w-full h-full object-cover" />}
+            </div>
+            <div>
+              <button
+                type="button"
+                className="text-xs font-semibold"
+                onClick={() => avatarInputRef.current?.click()}
+              >
+                Upload photo
+              </button>
+              <input
+                type="file"
+                accept="image/png, image/jpeg"
+                ref={avatarInputRef}
+                onChange={onAvatarSelected}
+                className="hidden"
+              />
+            </div>
+          </div>
 
-          <input
-            type="text"
-            placeholder="Last name"
-            className="rounded-lg border border-bark p-2 text-sm focus:outline-none transition"
-            {...register("lastName")}
-          />
-          {errors.lastName && <span className="text-xs">{errors.lastName.message}</span>}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+            <label className="text-xs">
+              First name
+              <input
+                type="text"
+                className="mt-1 w-full rounded-lg border border-bark p-2 text-sm focus:outline-none transition"
+                {...register("firstName")}
+              />
+              {errors.firstName && <span className="text-xs">{errors.firstName.message}</span>}
+            </label>
+            <label className="text-xs">
+              Last name
+              <input
+                type="text"
+                className="mt-1 w-full rounded-lg border border-bark p-2 text-sm focus:outline-none transition"
+                {...register("lastName")}
+              />
+              {errors.lastName && <span className="text-xs">{errors.lastName.message}</span>}
+            </label>
+            <label className="text-xs">
+              Maiden name (optional)
+              <input
+                type="text"
+                className="mt-1 w-full rounded-lg border border-bark p-2 text-sm focus:outline-none transition"
+                {...register("maidenName")}
+              />
+            </label>
+            <label className="text-xs">
+              Occupation (optional)
+              <input
+                type="text"
+                className="mt-1 w-full rounded-lg border border-bark p-2 text-sm focus:outline-none transition"
+                {...register("occupation")}
+              />
+            </label>
+            <label className="text-xs">
+              Birth date (optional)
+              <input
+                type="date"
+                className="mt-1 w-full rounded-lg border border-bark p-2 text-sm focus:outline-none transition"
+                {...register("birthDate")}
+              />
+            </label>
+            <label className="text-xs">
+              Birth place (optional)
+              <input
+                type="text"
+                className="mt-1 w-full rounded-lg border border-bark p-2 text-sm focus:outline-none transition"
+                {...register("birthPlace")}
+              />
+            </label>
+            <label className="text-xs">
+              Death date (optional)
+              <input
+                type="date"
+                className="mt-1 w-full rounded-lg border border-bark p-2 text-sm focus:outline-none transition"
+                {...register("deathDate")}
+              />
+              {errors.deathDate && <span className="text-xs">{errors.deathDate.message}</span>}
+            </label>
+            <label className="text-xs">
+              Death place (optional)
+              <input
+                type="text"
+                className="mt-1 w-full rounded-lg border border-bark p-2 text-sm focus:outline-none transition"
+                {...register("deathPlace")}
+              />
+            </label>
+          </div>
 
           <label className="text-xs">
-            Birth date (optional)
-            <input
-              type="date"
+            Bio (optional)
+            <textarea
+              rows={3}
               className="mt-1 w-full rounded-lg border border-bark p-2 text-sm focus:outline-none transition"
-              {...register("birthDate")}
+              {...register("bio")}
             />
           </label>
 
-          <label className="text-xs">
-            Death date (optional)
-            <input
-              type="date"
-              className="mt-1 w-full rounded-lg border border-bark p-2 text-sm focus:outline-none transition"
-              {...register("deathDate")}
-            />
-          </label>
-          {errors.deathDate && <span className="text-xs">{errors.deathDate.message}</span>}
+          {persons.length > 0 && (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-2 pt-2 border-t border-bark/20">
+              <label className="text-xs">
+                Relation to existing person (optional)
+                <select
+                  className="mt-1 w-full rounded-lg border border-bark p-2 text-sm focus:outline-none transition"
+                  defaultValue=""
+                  {...register("relationToPerson")}
+                >
+                  <option value="">No relation</option>
+                  {Object.entries(relationDirectionLabels).map(([value, label]) => (
+                    <option key={value} value={value}>
+                      {label}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <label className="text-xs">
+                Person
+                <select
+                  className="mt-1 w-full rounded-lg border border-bark p-2 text-sm focus:outline-none transition"
+                  defaultValue=""
+                  {...register("relatedPersonId")}
+                >
+                  <option value="">Select person</option>
+                  {persons.map((person) => (
+                    <option key={person.id} value={person.id}>
+                      {person.firstName} {person.lastName}
+                    </option>
+                  ))}
+                </select>
+                {errors.relationToPerson && (
+                  <span className="text-xs">{errors.relationToPerson.message}</span>
+                )}
+              </label>
+            </div>
+          )}
 
           {addError && <span className="text-xs">{addError}</span>}
 
@@ -236,7 +362,9 @@ export function TreeClient({ familyId, currentUserId, persons, relations, genera
         familyId={familyId}
         generations={generations}
         relations={relations}
+        persons={persons}
         currentUserId={currentUserId}
+        canManageRelations={canManageRelations}
       />
     </section>
   );

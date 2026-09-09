@@ -73,3 +73,49 @@ export async function PATCH(
 
   return NextResponse.json({ ok: true });
 }
+
+export async function DELETE(
+  request: Request,
+  { params }: { params: Promise<{ id: string; personId: string }> }
+) {
+  const session = await getServerSession(authOptions);
+  if (!session?.user?.id) {
+    return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
+  }
+
+  const { id: familyId, personId } = await params;
+
+  const context = await getFamilyContext(session.user.id, familyId);
+  if (!context?.isActiveMember || !context.membership) {
+    return NextResponse.json({ error: "You are not a member of this family" }, { status: 403 });
+  }
+
+  const membership = await prisma.familyTreeMembership.findUnique({
+    where: { personId_familyId: { personId, familyId } },
+    include: { person: true },
+  });
+  if (!membership) {
+    return NextResponse.json({ error: "Person not found in this family's tree" }, { status: 404 });
+  }
+
+  if (!canEditPersonNode(session.user.id, membership.person)) {
+    return NextResponse.json(
+      { error: "Only the person who added this profile can delete it" },
+      { status: 403 }
+    );
+  }
+
+  const linkedFamilyMember = await prisma.familyMember.findFirst({
+    where: { personNodeId: personId, familyId },
+  });
+  if (linkedFamilyMember || membership.person.userId) {
+    return NextResponse.json(
+      { error: "This person is a family member and cannot be removed from the tree" },
+      { status: 400 }
+    );
+  }
+
+  await prisma.personNode.delete({ where: { id: personId } });
+
+  return NextResponse.json({ ok: true });
+}

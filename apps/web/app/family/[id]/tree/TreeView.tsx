@@ -60,12 +60,16 @@ export function TreeView({
   familyId,
   generations,
   relations,
+  persons,
   currentUserId,
+  canManageRelations,
 }: {
   familyId: string;
   generations: GenerationRow[];
   relations: PersonRelation[];
+  persons: { id: string; firstName: string; lastName: string }[];
   currentUserId: string;
+  canManageRelations: boolean;
 }) {
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const selectedPerson = generations
@@ -94,6 +98,17 @@ export function TreeView({
 
   return (
     <div className="flex flex-col gap-6">
+      {selectedPerson && (
+        <PersonProfilePanel
+          familyId={familyId}
+          person={selectedPerson}
+          currentUserId={currentUserId}
+          persons={persons}
+          relations={relations}
+          canManageRelations={canManageRelations}
+        />
+      )}
+
       {generations.map((row, i) => (
         <div
           key={row.generation}
@@ -126,10 +141,6 @@ export function TreeView({
           )}
         </div>
       ))}
-
-      {selectedPerson && (
-        <PersonProfilePanel familyId={familyId} person={selectedPerson} currentUserId={currentUserId} />
-      )}
     </div>
   );
 }

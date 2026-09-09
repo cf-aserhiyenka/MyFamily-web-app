@@ -1,12 +1,30 @@
 import { z } from "zod";
 
+export const relationDirectionSchema = z.enum(["CHILD_OF", "PARENT_OF", "PARTNER_OF", "SIBLING_OF"]);
+
+export type RelationDirection = z.infer<typeof relationDirectionSchema>;
+
+const emptyToUndefined = (value: unknown) => (value === "" ? undefined : value);
+
 export const createPersonSchema = z
   .object({
     firstName: z.string().min(1, "First name is required"),
     lastName: z.string().min(1, "Last name is required"),
+    maidenName: z.string().max(100, "Maiden name is too long").optional(),
     birthDate: z.string().optional(),
+    birthPlace: z.string().max(200, "Birth place is too long").optional(),
     deathDate: z.string().optional(),
+    deathPlace: z.string().max(200, "Death place is too long").optional(),
+    occupation: z.string().max(200, "Occupation is too long").optional(),
+    bio: z.string().max(1000, "Bio is too long").optional(),
+    avatarBase64: z.string().nullable().optional(),
+    relatedPersonId: z.preprocess(emptyToUndefined, z.string().optional()),
+    relationToPerson: z.preprocess(emptyToUndefined, relationDirectionSchema.optional()),
   })
+  .refine((data) => Boolean(data.relatedPersonId) === Boolean(data.relationToPerson), {
+    message: "Select both a relation type and a person",
+    path: ["relationToPerson"],
+  });
 
 export type CreatePersonInput = z.infer<typeof createPersonSchema>;
 
