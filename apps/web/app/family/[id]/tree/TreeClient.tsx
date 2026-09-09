@@ -232,7 +232,12 @@ export function TreeClient({ familyId, currentUserId, persons, relations, genera
         </form>
       )}
 
-      <TreeView generations={generations} relations={relations} currentUserId={currentUserId} />
+      <TreeView
+        familyId={familyId}
+        generations={generations}
+        relations={relations}
+        currentUserId={currentUserId}
+      />
     </section>
   );
 }
