@@ -3,15 +3,9 @@
 import { useState } from "react";
 import type { PersonRelation } from "@myfamily/db";
 import type { GenerationRow } from "@/lib/tree";
+import { PersonProfilePanel, type TreePersonDetails } from "./PersonProfilePanel";
 
-type TreePerson = {
-  id: string;
-  firstName: string;
-  lastName: string;
-  birthDate: Date | null;
-  deathDate: Date | null;
-  userId: string | null;
-};
+type TreePerson = TreePersonDetails;
 
 function initials(firstName: string, lastName: string) {
   return `${firstName[0] ?? ""}${lastName[0] ?? ""}`.toUpperCase();
@@ -47,8 +41,12 @@ function PersonCard({
         (isHighlighted ? "ring-2 ring-bark bg-bark/10" : "")
       }
     >
-      <div className="w-12 h-12 shrink-0 rounded-full bg-bark text-cream flex items-center justify-center font-bold text-sm">
-        {initials(person.firstName, person.lastName)}
+      <div className="w-12 h-12 shrink-0 rounded-full bg-bark text-cream overflow-hidden flex items-center justify-center font-bold text-sm">
+        {person.avatarBase64 ? (
+          <img src={person.avatarBase64} alt="" className="w-full h-full object-cover" />
+        ) : (
+          initials(person.firstName, person.lastName)
+        )}
       </div>
       <p className="text-sm font-semibold leading-tight truncate w-full">
         {person.firstName} {person.lastName} {isYou && "(you)"}
@@ -59,15 +57,21 @@ function PersonCard({
 }
 
 export function TreeView({
+  familyId,
   generations,
   relations,
   currentUserId,
 }: {
+  familyId: string;
   generations: GenerationRow[];
   relations: PersonRelation[];
   currentUserId: string;
 }) {
   const [selectedId, setSelectedId] = useState<string | null>(null);
+  const selectedPerson = generations
+    .flatMap((row) => row.groups)
+    .flat()
+    .find((p) => p.id === selectedId);
 
   const parentOf = relations.filter((r) => r.relation === "PARENT_OF");
   const parentIds = new Set(parentOf.filter((r) => r.personBId === selectedId).map((r) => r.personAId));
@@ -122,6 +126,10 @@ export function TreeView({
           )}
         </div>
       ))}
+
+      {selectedPerson && (
+        <PersonProfilePanel familyId={familyId} person={selectedPerson} currentUserId={currentUserId} />
+      )}
     </div>
   );
 }
